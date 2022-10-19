@@ -5,7 +5,6 @@
 <br/>
 <p align="center">
 <a href="https://chain.link" target="_blank">
-<img src="./img/chainlink-foundry.png" width="225" alt="Chainlink Foundry logo">
 </a>
 </p>
 <br/>

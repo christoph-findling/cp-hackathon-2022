@@ -1,8 +1,7 @@
 {
-  "name": "foundry-starter-kit",
-  "version": "1.0.0",
-  "description": "Minimal Template for Foundry Projects",
-  "author": "Patrick Collins",
+  "name": "cp-hackathon-2022-contracts",
+  "version": "0.0.1",
+  "description": "Charged particles hackathon 2022",
   "license": "MIT",
   "files": [
     "src/**/*.sol"
@@ -13,10 +12,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/smartcontractkit/foundry-starter-kit.git"
+    "url": "git+https://github.com/christoph-findling/cp-hackathon-2022.git"
   },
   "bugs": {
-    "url": "https://github.com/smartcontractkit/foundry-starter-kit/issues"
+    "url": "https://github.com/christoph-findling/cp-hackathon-2022/issues"
   },
   "scripts": {
     "setup": "make clean && make build",
