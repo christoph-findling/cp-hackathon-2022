@@ -35,6 +35,11 @@ interface IBasketBlueprintRegistry {
         view
         returns (address);
 
+    function basketBlueprintAssets(bytes32 basketBlueprintName)
+        external
+        view
+        returns (BasketAsset[] memory);
+
     function defineBasketBlueprint(
         bytes32 basketBlueprintName,
         BasketAsset[] calldata assets

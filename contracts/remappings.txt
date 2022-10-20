@@ -1,4 +1,4 @@
-@std=contracts/lib/forge-std/src/
-@clones=contracts/lib/clones-with-immutable-args/src/
-forge-std/=contracts/lib/forge-std/src/
-@openzeppelin/=contracts/lib/openzeppelin-contracts/
+@std=lib/forge-std/src/
+@clones=lib/clones-with-immutable-args/src/
+forge-std/=lib/forge-std/src/
+@openzeppelin/=lib/openzeppelin-contracts/
