@@ -7,16 +7,16 @@ const Header = () => {
   const dispatch = useDispatch()
   return (
     <div className='flex w-full justify-between'>
-      <div>LEFT</div>
+      {/* <div>LEFT</div>
       <div>
         <span>AuthState: {authState ? 'Logged in' : 'Logged out'}</span>
         <br />
         <a onClick={() => dispatch(setAuthState(!authState))}>
           <Button title={authState ? 'Log out' : 'Login'}></Button>
         </a>
-      </div>
+      </div> */}
     </div>
   )
 }
 
-export default Header
+export default Header;
