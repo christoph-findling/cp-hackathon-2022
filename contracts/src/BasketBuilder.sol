@@ -3,6 +3,11 @@ pragma solidity >=0.8.17;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+import {IProtonB} from "@charged-particles/contracts/interfaces/IProtonB.sol";
+import {IChargedParticles} from "@charged-particles/contracts/interfaces/IChargedParticles.sol";
+import {IChargedState} from "@charged-particles/contracts/interfaces/IChargedState.sol";
 
 import {IBasketBlueprintRegistry} from "./interfaces/IBasketBlueprintRegistry.sol";
 import {IBasketManager} from "./interfaces/IBasketManager.sol";
@@ -11,7 +16,7 @@ error BasketBuilder__BasketBlueprintNotDefined();
 error BasketBuilder__Unauthorized();
 error BasketBuilder__InvalidParams();
 
-contract BasketBuilder {
+contract BasketBuilder is Ownable {
     using SafeERC20 for IERC20;
 
     // default hardcoded values for now for formula "modifiers"
@@ -21,12 +26,19 @@ contract BasketBuilder {
     IBasketBlueprintRegistry public immutable basketBlueprintRegistry;
     IBasketManager public immutable basketManager;
 
+    IProtonB public immutable protonB;
+    IChargedParticles public immutable chargedParticles;
+
     constructor(
         IBasketBlueprintRegistry _basketBlueprintRegistry,
-        IBasketManager _basketManager
-    ) {
+        IBasketManager _basketManager,
+        IProtonB _protonB,
+        IChargedParticles _chargedParticles
+    ) Ownable() {
         basketBlueprintRegistry = _basketBlueprintRegistry;
         basketManager = _basketManager;
+        protonB = _protonB;
+        chargedParticles = _chargedParticles;
     }
 
     // expects transferFrom from msg.sender for each asset is executable (builder is swaps logic agnostic)
@@ -36,38 +48,20 @@ contract BasketBuilder {
         bytes32 basketBlueprintName,
         address receiver,
         uint32 riskRate,
-        uint256[] calldata assetAmounts
+        uint256[] calldata assetAmounts,
+        uint256 unlockBlock
     ) external {
         IBasketBlueprintRegistry.BasketAsset[]
             memory basketAssets = _validBasket(basketBlueprintName);
 
-        if (assetAmounts.length != basketAssets.length) {
-            revert BasketBuilder__InvalidParams();
-        }
+        _validBuildValues(basketAssets, riskRate, assetAmounts);
 
-        // can't get actual basketAssetAmounts (would need price related to inputToken -> asset)
-        // instead expect amounts for each basketAsset in input params
-
-        // get should be asset ratios / amounts
-        uint256[] memory shouldBeAmounts;
-        (shouldBeAmounts, , ) = _getBasketAssetsRatios(riskRate, basketAssets);
-        // and ensure ratios of input param asset amounts are matching with the given user riskRate
-        for (uint256 i = 0; i < basketAssets.length - 1; ++i) {
-            // compare ratio of asset to next asset
-            uint256 isRatio = (assetAmounts[i] * 1e18) / assetAmounts[i + 1];
-            uint256 shouldBeRatio = (shouldBeAmounts[i] * 1e18) /
-                shouldBeAmounts[i + 1];
-
-            if (_absDifference(isRatio, shouldBeRatio) > 1e6) {
-                // allow for some tolerance of 1e6 in divergence
-                revert BasketBuilder__InvalidParams();
-            }
-        }
-
-        uint256 tokenId = 0; // ProtonB.createChargedParticle
-        // execute transferFrom for each amounts. BasketSwapper has to approve all basketTokens...
-        // approve once, to BasketBuilder, with max UINT
-        // ChargedParticles.energizeParticle forEach
+        uint256 tokenId = _buildBasket(
+            basketAssets,
+            assetAmounts,
+            receiver,
+            unlockBlock
+        );
 
         // store particle token Id -> basketBlueprintName, user riskRate in BasketManager
         basketManager.createBasketMeta(tokenId, basketBlueprintName, riskRate);
@@ -145,6 +139,101 @@ contract BasketBuilder {
             (basketBlueprintRegistry.riskRateMaxValue() * dx) -
             (riskRateDifference * dx) +
             (basketAsset.weight * wx);
+    }
+
+    function _buildBasket(
+        IBasketBlueprintRegistry.BasketAsset[] memory basketAssets,
+        uint256[] calldata assetAmounts,
+        address receiver,
+        uint256 unlockBlock
+    ) internal returns (uint256 tokenId) {
+        // 1. transferFrom each basketAsset in according to assetAmounts (assumes ERC20 approve has been executed)
+        for (uint256 i = 0; i < basketAssets.length; ++i) {
+            basketAssets[i].asset.safeTransferFrom(
+                msg.sender,
+                address(this),
+                assetAmounts[i]
+            );
+        }
+
+        // 2. create charged particle NFT with first asset wrapped
+        basketAssets[0].asset.safeApprove(address(protonB), assetAmounts[0]);
+
+        tokenId = protonB.createChargedParticle(
+            owner(), // creator
+            receiver, // receiver
+            address(0), // referrer
+            "", // tokenMetaUri -> to-do later
+            address(0), // walletManagerId -> @TODO what is the walletManagerId??
+            address(basketAssets[0].asset), // assetToken
+            assetAmounts[0], // assetAmount
+            0 // annuityPercent
+        );
+
+        // 3. ChargedParticles.energizeParticle forEach asset (except first, which is already in)
+        for (uint256 i = 1; i < basketAssets.length; ++i) {
+            // The account must approve THIS (ChargedParticles.sol) contract as operator of the asset. ?
+            // "as operator" -> @TODO what does this mean? is approve enough?
+            basketAssets[i].asset.safeApprove(
+                address(chargedParticles),
+                assetAmounts[i]
+            );
+
+            chargedParticles.energizeParticle(
+                // The address to the contract of the token (Particle)
+                address(protonB), // contractAddress ... @TODO -> is this ProtonB?
+                tokenId, // tokenId
+                address(0), // walletManagerId -> @TODO what is the walletManagerId??
+                address(basketAssets[i].asset), // assetToken
+                assetAmounts[i], // assetAmount
+                address(0) // referrer
+            );
+        }
+
+        if (unlockBlock != 0) {
+            // @TODO: for timelock until a certain block (We don't use bonds) -> is releaseTimelock correct?
+            IChargedState chargedState = IChargedState(
+                chargedParticles.getStateAddress()
+            );
+            chargedState.setReleaseTimelock(
+                address(protonB), // contractAddress ... @TODO -> is this ProtonB?
+                tokenId, // tokenId
+                unlockBlock
+            );
+            // @TODO: do we have to get permisions somehow first to execute this?
+        }
+    }
+
+    function _validBuildValues(
+        IBasketBlueprintRegistry.BasketAsset[] memory basketAssets,
+        uint32 riskRate,
+        uint256[] calldata assetAmounts
+    ) internal view {
+        if (
+            basketAssets.length > 0 &&
+            assetAmounts.length != basketAssets.length
+        ) {
+            revert BasketBuilder__InvalidParams();
+        }
+
+        // can't get actual basketAssetAmounts (would need price related to inputToken -> asset)
+        // instead expect amounts for each basketAsset in input params
+
+        // get should be asset ratios / amounts
+        uint256[] memory shouldBeAmounts;
+        (shouldBeAmounts, , ) = _getBasketAssetsRatios(riskRate, basketAssets);
+        // and ensure ratios of input param asset amounts are matching with the given user riskRate
+        for (uint256 i = 0; i < basketAssets.length - 1; ++i) {
+            // compare ratio of asset to next asset
+            uint256 isRatio = (assetAmounts[i] * 1e18) / assetAmounts[i + 1];
+            uint256 shouldBeRatio = (shouldBeAmounts[i] * 1e18) /
+                shouldBeAmounts[i + 1];
+
+            if (_absDifference(isRatio, shouldBeRatio) > 1e6) {
+                // allow for some tolerance of 1e6 in divergence
+                revert BasketBuilder__InvalidParams();
+            }
+        }
     }
 
     function _validBasket(bytes32 basketBlueprintName)
