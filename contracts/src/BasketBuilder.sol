@@ -5,9 +5,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {IProtonB} from "@charged-particles/contracts/interfaces/IProtonB.sol";
-import {IChargedParticles} from "@charged-particles/contracts/interfaces/IChargedParticles.sol";
-import {IChargedState} from "@charged-particles/contracts/interfaces/IChargedState.sol";
+import {IProtonB} from "./external/charged-particles/IProtonB.sol";
+import {IChargedParticles} from "./external/charged-particles/IChargedParticles.sol";
+import {IChargedState} from "./external/charged-particles/IChargedState.sol";
 
 import {IBasketBlueprintRegistry} from "./interfaces/IBasketBlueprintRegistry.sol";
 import {IBasketManager} from "./interfaces/IBasketManager.sol";
@@ -164,7 +164,7 @@ contract BasketBuilder is Ownable {
             receiver, // receiver
             address(0), // referrer
             "", // tokenMetaUri -> to-do later
-            address(0), // walletManagerId -> @TODO what is the walletManagerId??
+            "", // walletManagerId -> @TODO what is the walletManagerId??
             address(basketAssets[0].asset), // assetToken
             assetAmounts[0], // assetAmount
             0 // annuityPercent
@@ -183,7 +183,7 @@ contract BasketBuilder is Ownable {
                 // The address to the contract of the token (Particle)
                 address(protonB), // contractAddress ... @TODO -> is this ProtonB?
                 tokenId, // tokenId
-                address(0), // walletManagerId -> @TODO what is the walletManagerId??
+                "", // walletManagerId -> @TODO what is the walletManagerId??
                 address(basketAssets[i].asset), // assetToken
                 assetAmounts[i], // assetAmount
                 address(0) // referrer

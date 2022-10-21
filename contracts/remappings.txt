@@ -2,4 +2,3 @@
 @clones=lib/clones-with-immutable-args/src/
 forge-std/=lib/forge-std/src/
 @openzeppelin/=lib/openzeppelin-contracts/
-@charged-particles/=lib/charged-particles-universe/
