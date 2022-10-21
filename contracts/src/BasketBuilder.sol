@@ -4,8 +4,8 @@ pragma solidity >=0.8.17;
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {IBasketBlueprintRegistry} from "./IBasketBlueprintRegistry.sol";
-import {IBasketManager} from "./IBasketManager.sol";
+import {IBasketBlueprintRegistry} from "./interfaces/IBasketBlueprintRegistry.sol";
+import {IBasketManager} from "./interfaces/IBasketManager.sol";
 
 error BasketBuilder__BasketBlueprintNotDefined();
 error BasketBuilder__Unauthorized();
@@ -13,6 +13,10 @@ error BasketBuilder__InvalidParams();
 
 contract BasketBuilder {
     using SafeERC20 for IERC20;
+
+    // default hardcoded values for now for formula "modifiers"
+    uint32 public constant dx = 2; // increases significance of difference user risk Rate to asset risk rate
+    uint32 public constant wx = 1; // increases significance of basketAsset weight
 
     IBasketBlueprintRegistry public immutable basketBlueprintRegistry;
     IBasketManager public immutable basketManager;
@@ -26,34 +30,36 @@ contract BasketBuilder {
     }
 
     // expects transferFrom from msg.sender for each asset is executable (builder is swaps logic agnostic)
-    /// @param assetAmounts amount for each basket asset in the same order (!)
-    ///                     as basketAssets (BasketBlueprintRegistry.basketAssets())
+    /// @param assetAmounts amount for each basketBlueprint asset in the same order (!)
+    ///                     as basketAssets (BasketBlueprintRegistry.basketBlueprintAssets())
     function build(
         bytes32 basketBlueprintName,
         address receiver,
         uint32 riskRate,
         uint256[] calldata assetAmounts
     ) external {
-        IBasketBlueprintRegistry.BasketBlueprint
-            memory basketBlueprint = _validBasket(basketBlueprintName);
+        IBasketBlueprintRegistry.BasketAsset[]
+            memory basketAssets = _validBasket(basketBlueprintName);
 
-        if (assetAmounts.length != basketBlueprint.assets.length) {
+        if (assetAmounts.length != basketAssets.length) {
             revert BasketBuilder__InvalidParams();
         }
 
         // can't get actual basketAssetAmounts (would need price related to inputToken -> asset)
-        // instead expect amounts for each basketAsset
+        // instead expect amounts for each basketAsset in input params
 
-        // and ensure weights of asset amounts are matching with the given user riskRate
+        // get should be asset ratios / amounts
         uint256[] memory shouldBeAmounts;
-        (shouldBeAmounts, , ) = basketAssetsWeight(riskRate, basketBlueprint);
-        for (uint256 i = 0; i < basketBlueprint.assets.length - 1; ++i) {
+        (shouldBeAmounts, , ) = _getBasketAssetsRatios(riskRate, basketAssets);
+        // and ensure ratios of input param asset amounts are matching with the given user riskRate
+        for (uint256 i = 0; i < basketAssets.length - 1; ++i) {
             // compare ratio of asset to next asset
             uint256 isRatio = (assetAmounts[i] * 1e18) / assetAmounts[i + 1];
             uint256 shouldBeRatio = (shouldBeAmounts[i] * 1e18) /
                 shouldBeAmounts[i + 1];
 
             if (_absDifference(isRatio, shouldBeRatio) > 1e6) {
+                // allow for some tolerance of 1e6 in divergence
                 revert BasketBuilder__InvalidParams();
             }
         }
@@ -78,16 +84,16 @@ contract BasketBuilder {
         uint32 riskRate,
         uint256 inputAmount
     ) public view returns (address[] memory assets, uint256[] memory amounts) {
-        IBasketBlueprintRegistry.BasketBlueprint
-            memory basketBlueprint = _validBasket(basketBlueprintName);
+        IBasketBlueprintRegistry.BasketAsset[]
+            memory basketAssets = _validBasket(basketBlueprintName);
 
         uint256 amountsSum;
-        (amounts, assets, amountsSum) = basketAssetsWeight(
+        (amounts, assets, amountsSum) = _getBasketAssetsRatios(
             riskRate,
-            basketBlueprint
+            basketAssets
         );
 
-        amounts = _alignBasketAssetsWeightToInput(
+        amounts = _alignBasketAssetsRatiosToInput(
             amounts,
             inputAmount,
             amountsSum
@@ -96,58 +102,68 @@ contract BasketBuilder {
         return (assets, amounts);
     }
 
-    function basketAssetsWeight(
+    function _getBasketAssetsRatios(
         uint32 riskRate,
-        IBasketBlueprintRegistry.BasketBlueprint memory basketBlueprint
+        IBasketBlueprintRegistry.BasketAsset[] memory basketAssets
     )
         internal
-        pure
+        view
         returns (
             uint256[] memory amounts,
             address[] memory assets,
             uint256 amountsSum
         )
     {
+        if (riskRate > basketBlueprintRegistry.riskRateMaxValue()) {
+            revert BasketBuilder__InvalidParams();
+        }
+
         // get basketBlueprint amounts generalized not specific to inputAmount yet
-        for (uint256 i = 0; i < basketBlueprint.assets.length; ++i) {
-            IBasketBlueprintRegistry.BasketAsset
-                memory basketAsset = basketBlueprint.assets[i];
-
-            assets[i] = address(basketAsset.asset);
-
-            uint256 riskRateDifference = _absDifference(
-                riskRate,
-                basketAsset.riskRate
-            );
-            if (riskRateDifference == 0) {
-                // if difference is 0 we use 1 instead (smallest possible nonzero difference)
-                // because we use the riskRateDifference as denominator in a subsequent division
-                // and we don't want to cause a nuclear meltdown by dividing by 0
-                riskRateDifference = 1;
-            }
-
-            amounts[i] = (basketAsset.weight * 1e18) / riskRateDifference;
+        for (uint256 i = 0; i < basketAssets.length; ++i) {
+            assets[i] = address(basketAssets[i].asset);
+            amounts[i] = _getBasketAssetRatio(riskRate, basketAssets[i]);
             amountsSum += amounts[i];
         }
+    }
+
+    function _getBasketAssetRatio(
+        uint32 riskRate,
+        IBasketBlueprintRegistry.BasketAsset memory basketAsset
+    ) internal view returns (uint256 ratio) {
+        // FORMULA: y = riskRateMaxValue * dx - d * dx + w * wx
+        // d must be > 0 and can be maximally `riskRateMaxValue`
+        // w must be > 0
+        // d = differenceAbs of riskRate to assetRiskRate. because of risk rates can be maximally riskRateMaxValue
+        // the diff abs is also maximally riskRateMaxValue
+
+        uint256 riskRateDifference = _absDifference(
+            riskRate,
+            basketAsset.riskRate
+        ); // = d in formula
+
+        ratio =
+            (basketBlueprintRegistry.riskRateMaxValue() * dx) -
+            (riskRateDifference * dx) +
+            (basketAsset.weight * wx);
     }
 
     function _validBasket(bytes32 basketBlueprintName)
         internal
         view
-        returns (
-            IBasketBlueprintRegistry.BasketBlueprint memory basketBlueprint
-        )
+        returns (IBasketBlueprintRegistry.BasketAsset[] memory basketAssets)
     {
-        basketBlueprint = basketBlueprintRegistry.basketBlueprint(
-            basketBlueprintName
-        );
-
-        if (basketBlueprint.owner == address(0)) {
+        if (
+            !basketBlueprintRegistry.basketBlueprintDefined(basketBlueprintName)
+        ) {
             revert BasketBuilder__BasketBlueprintNotDefined();
         }
+
+        basketAssets = basketBlueprintRegistry.basketBlueprintAssets(
+            basketBlueprintName
+        );
     }
 
-    function _alignBasketAssetsWeightToInput(
+    function _alignBasketAssetsRatiosToInput(
         uint256[] memory amounts,
         uint256 inputAmount,
         uint256 amountsSum
@@ -175,12 +191,15 @@ contract BasketBuilder {
         pure
         returns (uint256)
     {
-        if (num1 == num2) {
-            return 0;
-        } else if (num1 > num2) {
-            return num1 - num2;
-        } else {
-            return num2 - num1;
+        // can't underflow because we explicitly check for it
+        unchecked {
+            if (num1 == num2) {
+                return 0;
+            } else if (num1 > num2) {
+                return num1 - num2;
+            } else {
+                return num2 - num1;
+            }
         }
     }
 }
