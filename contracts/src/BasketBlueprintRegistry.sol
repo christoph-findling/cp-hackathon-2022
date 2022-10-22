@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: No License
 pragma solidity >=0.8.17;
 
 import {IBasketBlueprintRegistry} from "./interfaces/IBasketBlueprintRegistry.sol";
