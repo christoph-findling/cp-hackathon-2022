@@ -11,13 +11,14 @@ import {IChargedState} from "./external/charged-particles/IChargedState.sol";
 
 import {IBasketBlueprintRegistry} from "./interfaces/IBasketBlueprintRegistry.sol";
 import {IBasketManager} from "./interfaces/IBasketManager.sol";
+import {IBasketBuilder} from "./interfaces/IBasketBuilder.sol";
 import {MultiSwap} from "./MultiSwap.sol";
 
 error BasketBuilder__BasketBlueprintNotDefined();
 error BasketBuilder__Unauthorized();
 error BasketBuilder__InvalidParams();
 
-contract BasketBuilder is MultiSwap, Ownable {
+contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
     using SafeERC20 for IERC20;
 
     // default hardcoded values for now for formula "modifiers"

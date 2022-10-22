@@ -1,38 +1,43 @@
-Run Dev environment: 
+Run Dev environment:
 
 Setup:
-- clone
-- run `make`
-- create .env file and set ALCHEMY_KEY for polygon
+
+-   clone
+-   run `make`
+-   create .env file and set ALCHEMY_KEY for polygon
 
 Run:
-- run `make node` in one terminal (this will run a local node with anvil)
-- run `make run` in another terminal (this will deploy all contracts with an initial state)
 
---------------
+-   run `make node` in one terminal (this will run a local node with anvil)
+-   run `make run` in another terminal (this will deploy all contracts and create an initial state with a defined Basket "DEFAULT")
 
-*Note: This repo has been recently updated for Goerli*
+Demo use:
+
+-   use basket-demo-sdk.ts in /tslib. Execute `init()` first
+
+---
+
+_Note: This repo has been recently updated for Goerli_
 
 # Foundry Starter Kit
 
 Foundry Starter Kit is a repo that shows developers how to quickly build, test, and deploy smart contracts with one of the fastest frameworks out there, [foundry](https://github.com/gakonst/foundry)!
 
-
-- [Foundry Starter Kit](#foundry-starter-kit)
-- [Getting Started](#getting-started)
-  - [Requirements](#requirements)
-  - [Quickstart](#quickstart)
-  - [Testing](#testing)
-- [Deploying to a network](#deploying-to-a-network)
-  - [Setup](#setup)
-  - [Deploying](#deploying)
-    - [Working with a local network](#working-with-a-local-network)
-    - [Working with other chains](#working-with-other-chains)
-- [Security](#security)
-- [Contributing](#contributing)
-- [Thank You!](#thank-you)
-  - [Resources](#resources)
-    - [TODO](#todo)
+-   [Foundry Starter Kit](#foundry-starter-kit)
+-   [Getting Started](#getting-started)
+    -   [Requirements](#requirements)
+    -   [Quickstart](#quickstart)
+    -   [Testing](#testing)
+-   [Deploying to a network](#deploying-to-a-network)
+    -   [Setup](#setup)
+    -   [Deploying](#deploying)
+        -   [Working with a local network](#working-with-a-local-network)
+        -   [Working with other chains](#working-with-other-chains)
+-   [Security](#security)
+-   [Contributing](#contributing)
+-   [Thank You!](#thank-you)
+    -   [Resources](#resources)
+        -   [TODO](#todo)
 
 # Getting Started
 
@@ -40,7 +45,7 @@ Foundry Starter Kit is a repo that shows developers how to quickly build, test, 
 
 Please install the following:
 
--   [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)  
+-   [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
     -   You'll know you've done it right if you can run `git --version`
 -   [Foundry / Foundryup](https://github.com/gakonst/foundry)
     -   This will install `forge`, `cast`, and `anvil`
@@ -80,7 +85,7 @@ We'll demo using the Goerli testnet. (Go here for [testnet goerli ETH](https://f
 
 You'll need to add the following variables to a `.env` file:
 
--   `GOERLI_RPC_URL`: A URL to connect to the blockchain. You can get one for free from [Alchemy](https://www.alchemy.com/). 
+-   `GOERLI_RPC_URL`: A URL to connect to the blockchain. You can get one for free from [Alchemy](https://www.alchemy.com/).
 -   `PRIVATE_KEY`: A private key from your wallet. You can get a private key from a new [Metamask](https://metamask.io/) account
     -   Additionally, if you want to deploy to a testnet, you'll need test ETH and/or LINK. You can get them from [faucets.chain.link](https://faucets.chain.link/).
 -   Optional `ETHERSCAN_API_KEY`: If you want to verify on etherscan
@@ -106,14 +111,14 @@ This will run the forge script, the script it's running is:
 If you don't have an `ETHERSCAN_API_KEY`, you can also just run:
 
 ```
-@forge script script/${contract}.s.sol:Deploy${contract} --rpc-url ${GOERLI_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast 
+@forge script script/${contract}.s.sol:Deploy${contract} --rpc-url ${GOERLI_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast
 ```
 
-These pull from the files in the `script` folder. 
+These pull from the files in the `script` folder.
 
 ### Working with a local network
 
-Foundry comes with local network [anvil](https://book.getfoundry.sh/anvil/index.html) baked in, and allows us to deploy to our local network for quick testing locally. 
+Foundry comes with local network [anvil](https://book.getfoundry.sh/anvil/index.html) baked in, and allows us to deploy to our local network for quick testing locally.
 
 To start a local network run:
 
@@ -121,7 +126,7 @@ To start a local network run:
 make anvil
 ```
 
-This will spin up a local blockchain with a determined private key, so you can use the same private key each time. 
+This will spin up a local blockchain with a determined private key, so you can use the same private key each time.
 
 Then, you can deploy to it with:
 
@@ -133,7 +138,7 @@ Similar to `deploy-goerli`
 
 ### Working with other chains
 
-To add a chain, you'd just need to make a new entry in the `Makefile`, and replace `<YOUR_CHAIN>` with whatever your chain's information is. 
+To add a chain, you'd just need to make a new entry in the `Makefile`, and replace `<YOUR_CHAIN>` with whatever your chain's information is.
 
 ```
 deploy-<YOUR_CHAIN> :; @forge script script/${contract}.s.sol:Deploy${contract} --rpc-url ${<YOUR_CHAIN>_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast -vvvv
@@ -150,9 +155,7 @@ Then, you can run:
 make slither
 ```
 
-And get your slither output. 
-
-
+And get your slither output.
 
 # Contributing
 
