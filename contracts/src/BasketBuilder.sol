@@ -35,8 +35,8 @@ contract BasketBuilder is MultiSwap, Ownable {
         IBasketManager _basketManager,
         IProtonB _protonB,
         IChargedParticles _chargedParticles,
-        address _swapTarget
-    ) MultiSwap(_swapTarget) Ownable() {
+        address _zeroXSwapTarget
+    ) MultiSwap(_zeroXSwapTarget) Ownable() {
         basketBlueprintRegistry = _basketBlueprintRegistry;
         basketManager = _basketManager;
         protonB = _protonB;

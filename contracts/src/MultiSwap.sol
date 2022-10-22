@@ -7,15 +7,10 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract MultiSwap {
     using SafeERC20 for IERC20;
 
-    address public immutable swapTarget;
+    address public immutable zeroXSwapTarget;
 
-    // execute transferFrom for each amounts. BasketSwapper has to approve all basketTokens...
-    // approve once, to BasketBuilder, with max UINT
-    // idea for limit discharge to certain amount each number of blocks?
-    // would be amazing for trust accounts -> e.g. pocket money for child?
-
-    constructor(address _swapTarget) {
-        swapTarget = _swapTarget;
+    constructor(address _zeroXSwapTarget) {
+        zeroXSwapTarget = _zeroXSwapTarget;
     }
 
     /// @param swapQuotes    The encoded 0x transactions to execute.
@@ -34,7 +29,7 @@ contract MultiSwap {
             address(this),
             maxAmountInputToken
         );
-        _safeApprove(inputToken, swapTarget, maxAmountInputToken);
+        _safeApprove(inputToken, zeroXSwapTarget, maxAmountInputToken);
 
         for (uint256 i = 0; i < swapQuotes.length; ++i) {
             uint256 balanceBefore = toAssets[i].balanceOf(address(this));
@@ -51,7 +46,7 @@ contract MultiSwap {
      *
      */
     function _fillQuote(bytes memory _quote) internal {
-        (bool success, bytes memory returndata) = swapTarget.call(_quote);
+        (bool success, bytes memory returndata) = zeroXSwapTarget.call(_quote);
 
         // Forwarding errors including new custom errors
         // Taken from: https://ethereum.stackexchange.com/a/111187/73805

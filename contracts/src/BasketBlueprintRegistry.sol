@@ -4,12 +4,12 @@ pragma solidity >=0.8.17;
 import {IBasketBlueprintRegistry} from "./interfaces/IBasketBlueprintRegistry.sol";
 import {AssetRiskRateRegistry} from "./AssetRiskRateRegistry.sol";
 
-error BasketBlueprintsRegistry__BasketBlueprintNotDefined();
-error BasketBlueprintsRegistry__Unauthorized();
-error BasketBlueprintsRegistry__InvalidParams();
-error BasketBlueprintsRegistry__RiskRateMismatch();
+error BasketBlueprintRegistry__BasketBlueprintNotDefined();
+error BasketBlueprintRegistry__Unauthorized();
+error BasketBlueprintRegistry__InvalidParams();
+error BasketBlueprintRegistry__RiskRateMismatch();
 
-contract BasketBlueprintsRegistry is
+contract BasketBlueprintRegistry is
     AssetRiskRateRegistry,
     IBasketBlueprintRegistry
 {
@@ -21,7 +21,7 @@ contract BasketBlueprintsRegistry is
 
     modifier basketBlueprintExists(bytes32 basketBlueprintName) {
         if (!basketBlueprintDefined(basketBlueprintName)) {
-            revert BasketBlueprintsRegistry__BasketBlueprintNotDefined();
+            revert BasketBlueprintRegistry__BasketBlueprintNotDefined();
         }
         _;
     }
@@ -35,7 +35,7 @@ contract BasketBlueprintsRegistry is
             _basketBlueprintOwner != address(0) && // must be defined
             _basketBlueprintOwner != msg.sender // and msg.sender must be owner
         ) {
-            revert BasketBlueprintsRegistry__Unauthorized();
+            revert BasketBlueprintRegistry__Unauthorized();
         }
         _;
     }
@@ -139,7 +139,7 @@ contract BasketBlueprintsRegistry is
                 assets[i].riskRate == 0 ||
                 assets[i].riskRate > riskRateMaxValue
             ) {
-                revert BasketBlueprintsRegistry__InvalidParams();
+                revert BasketBlueprintRegistry__InvalidParams();
             }
 
             if (assets[i].weight == 0) {
@@ -154,7 +154,7 @@ contract BasketBlueprintsRegistry is
                 protocolAssetRiskRate != 0 &&
                 protocolAssetRiskRate != assets[i].riskRate
             ) {
-                revert BasketBlueprintsRegistry__RiskRateMismatch();
+                revert BasketBlueprintRegistry__RiskRateMismatch();
             }
         }
 

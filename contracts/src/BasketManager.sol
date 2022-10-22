@@ -2,24 +2,35 @@
 pragma solidity >=0.8.17;
 
 import {IBasketManager} from "./interfaces/IBasketManager.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 error BasketManager__Unauthorized();
 
-contract BasketManager is IBasketManager {
+contract BasketManager is Ownable, IBasketManager {
     // basket NFT token id -> BasketMeta
     mapping(uint256 => BasketMeta) public basketMetas;
 
-    address public immutable basketBuilder;
+    mapping(address => bool) public basketBuilders;
 
-    constructor(address _basketBuilder) {
-        basketBuilder = _basketBuilder;
-    }
+    // solhint-disable-next-line no-empty-blocks
+    constructor() Ownable() {}
 
     modifier onlyBasketBuilder() {
-        if (msg.sender != basketBuilder) {
+        if (!isBasketBuilder(msg.sender)) {
             revert BasketManager__Unauthorized();
         }
         _;
+    }
+
+    function isBasketBuilder(address basketBuilder) public view returns (bool) {
+        return basketBuilders[basketBuilder] == true;
+    }
+
+    function setBasketBuilder(address basketBuilder, bool allowed)
+        external
+        onlyOwner
+    {
+        basketBuilders[basketBuilder] = allowed;
     }
 
     function createBasketMeta(

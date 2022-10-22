@@ -1,3 +1,16 @@
+Run Dev environment: 
+
+Setup:
+- clone
+- run `make`
+- create .env file and set ALCHEMY_KEY for polygon
+
+Run:
+- run `make node` in one terminal (this will run a local node with anvil)
+- run `make run` in another terminal (this will deploy all contracts with an initial state)
+
+--------------
+
 *Note: This repo has been recently updated for Goerli*
 
 # Foundry Starter Kit
