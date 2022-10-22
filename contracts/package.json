@@ -2,7 +2,7 @@
   "name": "cp-hackathon-2022-contracts",
   "version": "0.0.1",
   "description": "Charged particles hackathon 2022",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "files": [
     "src/**/*.sol"
   ],
