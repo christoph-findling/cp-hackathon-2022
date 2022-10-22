@@ -1,15 +1,19 @@
 import type { NextPage } from 'next'
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import CustomButton from '../components/button';
 import Layout from '../components/layout';
-import AssetSelector from '../components/slider';
+import CustomLink from '../components/link';
+import { selectAdvisorState, setAdvisorState } from '../store/advisorSlice';
+import { initialQuestionsState, stepsCount } from '../store/questions';
+import { setResultState } from '../store/resultSlice';
 
 export interface Answer {
     answer: string,
     points: number
 }
 
-export interface Step {
+export interface Question {
     title: string,
     question: string,
     answers: Answer[],
@@ -17,60 +21,12 @@ export interface Step {
     selected: number | null
 }
 
-const preSelected = true;
-
-const initialStepsState: Step[] = [
-    {
-        title: 'Question one',
-        question: 'I am mostly invested in...',
-        answers: [
-            { answer: 'real estate', points: 0 },
-            { answer: 'crypto', points: 50 },
-            { answer: 'stocks', points: 35 },
-            { answer: 'collectibles (art, classic cars, etc.)', points: 15 },
-            { answer: 'a mix of two or more of the above', points: 25 },
-        ],
-        active: true,
-        selected: preSelected ? 0 : null
-    },
-    {
-        title: 'Question two',
-        question: 'I worry about my investment decisions.',
-        answers: [
-            { answer: 'all the time', points: 0 },
-            { answer: 'regularly', points: 10 },
-            { answer: 'sometimes', points: 25 },
-            { answer: 'rarely', points: 35 },
-            { answer: 'never', points: 50 },
-        ],
-        active: false,
-        selected: preSelected ? 0 : null
-    },
-    {
-        title: 'Question three',
-        question: 'I have made investment decisions in the past that I regret.',
-        answers: [
-            { answer: 'yes, many', points: 0 },
-            { answer: 'yes, a few', points: 15 },
-            { answer: 'yes, one', points: 25 },
-            { answer: 'not quite sure', points: 35 },
-            { answer: 'no, never', points: 50 },
-        ], active: false,
-        selected: preSelected ? 0 : null
-    },
-    {
-        title: 'Question four',
-        question: 'Last question.',
-        answers: [
-            { answer: 'yes', points: 0 },
-            { answer: 'yes, but no', points: 15 },
-            { answer: 'yes, and no', points: 25 },
-            { answer: 'not quite sure', points: 35 },
-            { answer: 'no', points: 50 },
-        ], active: false,
-        selected: preSelected ? 0 : null
-    },
-]
+export interface Result {
+    risky: number,
+    mid: number,
+    stable: number,
+    riskTolerance: number
+}
 
 const checkmarkSVG = (fill?: string) => {
     return (
@@ -79,30 +35,53 @@ const checkmarkSVG = (fill?: string) => {
 }
 
 const Advisor: NextPage = () => {
+    const stepsState = useSelector(selectAdvisorState)
+    const dispatch = useDispatch()
 
-    const [stepsState, setStepsState] = useState(JSON.parse(JSON.stringify(initialStepsState)) as Step[]);
-    const [activeStep, setActiveStepState] = useState(0);
+    let activeQuestionInit = 0;
+    stepsState.forEach((step, i) => {
+        if (step.active) {
+            activeQuestionInit = i;
+        }
+    })
+    const [activeQuestion, setActiveQuestionState] = useState(activeQuestionInit);
+    const [riskTolerance, setRiskTolerance] = useState(0);
     const [finishedQuestions, setFinishedQuestionsState] = useState(false);
 
     const tabChanged = (val: number) => {
-        const newState = [...stepsState];
+        const newState = [...JSON.parse(JSON.stringify(stepsState))];
         newState.forEach((_, index) => newState[index].active = false);
         newState[val].active = true;
-        setActiveStepState(val);
-        setStepsState(newState);
+        setActiveQuestionState(val);
+        setQuestionsState(newState);
+    }
+
+    const setQuestionsState = (steps: Question[]) => {
+        dispatch(setAdvisorState(steps));
     }
 
     const answerSelected = (step: number, answer: number) => {
-        const newState = [...stepsState];
+        const newState = [...JSON.parse(JSON.stringify(stepsState))];
         newState[step].selected = answer;
-        setStepsState(newState);
+        setQuestionsState(newState);
         setTimeout(() => {
-            goToNextStep();
-        }, 200);
+            goToNextQuestion(newState);
+        }, 250);
     }
 
+    // Each time a checkbox is clicked, re-calculate the risk tolerance
+    useEffect(() => {
+        calculateRiskTolerance();
+        console.log('EFFECT')
+    }, [stepsState])
+    
+    useEffect(() => {
+        console.log('risktolerance ,', riskTolerance)
+        dispatch(setResultState({ risky: 30, mid: 30, stable: 40, riskTolerance }))
+    }, [riskTolerance])
+
     const showContinueButton = () => {
-        return stepsState.every((step: Step) => step.selected != null);
+        return stepsState.every((step: Question) => step.selected != null);
     }
 
     const activateNextButton = () => {
@@ -114,42 +93,53 @@ const Advisor: NextPage = () => {
     }
 
     const activateResetButton = () => {
-        return stepsState.filter((step: Step) => step?.selected != null).length > 0;
+        return stepsState.filter((step: Question) => step?.selected != null).length > 0;
+    }
+
+    const calculateRiskTolerance = () => {
+        let riskTolerance = 0;
+        stepsState.forEach((step) => {
+            if (!step?.selected) return;
+            riskTolerance += step.answers[step.selected].points / stepsCount;
+        })
+
+        setRiskTolerance(riskTolerance);
     }
 
     const resetState = () => {
-        setStepsState(JSON.parse(JSON.stringify(initialStepsState)) as Step[]);
-        setActiveStepState(0);
+        setQuestionsState(JSON.parse(JSON.stringify(initialQuestionsState)) as Question[]);
+        setActiveQuestionState(0);
         setFinishedQuestionsState(false)
     }
 
-    const goToNextStep = () => {
-        const newState = [...stepsState];
-        let currentActiveStep = 0;
-        newState.find((el, i) => el.active ? currentActiveStep = i : '');
-        if (currentActiveStep < newState.length - 1) {
-            newState.forEach((_, index) => newState[index].active = false);
-            newState[currentActiveStep + 1].active = true;
-            setStepsState(newState);
-            setActiveStepState(currentActiveStep + 1);
+    const goToNextQuestion = (newState?: Question[]) => {
+        let state = [...JSON.parse(JSON.stringify(stepsState))];
+        if (newState) state = [...JSON.parse(JSON.stringify(newState))];
+        let currentActiveQuestion = 0;
+        state.find((el, i) => el.active ? currentActiveQuestion = i : '');
+        if (currentActiveQuestion < state.length - 1) {
+            state.forEach((_, index) => state[index].active = false);
+            state[currentActiveQuestion + 1].active = true;
+            setQuestionsState(state);
+            setActiveQuestionState(currentActiveQuestion + 1);
         }
     }
 
-    const goToPreviousStep = () => {
-        const newState = [...stepsState];
-        let currentActiveStep = 0;
-        newState.find((el, i) => el.active ? currentActiveStep = i : '');
-        if (currentActiveStep != 0) {
+    const goToPreviousQuestion = () => {
+        const newState = [...JSON.parse(JSON.stringify(stepsState))];
+        let currentActiveQuestion = 0;
+        newState.find((el, i) => el.active ? currentActiveQuestion = i : '');
+        if (currentActiveQuestion != 0) {
             newState.forEach((_, index) => newState[index].active = false);
-            newState[currentActiveStep - 1].active = true;
-            setStepsState(newState);
-            setActiveStepState(currentActiveStep - 1);
+            newState[currentActiveQuestion - 1].active = true;
+            setQuestionsState(newState);
+            setActiveQuestionState(currentActiveQuestion - 1);
         }
     }
 
     const getQuestion = () => {
-        const step = stepsState[activeStep];
-        const index = activeStep;
+        const step = stepsState[activeQuestion];
+        const index = activeQuestion;
         return (
             <div key={`question_${step.title}_${index}`} className={`mt-5 rounded shadow-lg shadow-slate-100 p-5 border ${index}`}>
                 <p className='text-lg italic'>{step.question}</p>
@@ -163,17 +153,13 @@ const Advisor: NextPage = () => {
         )
     }
 
-    const getResult = () => {
-        return { risky: 30, mid: 30, stable: 40 };
-    }
-
     return (
         <Layout>
             {!finishedQuestions &&
                 <div>
                     <div className="mb-8">
                         <div className="flex justify-between">
-                            {stepsState.map((step: Step, index: number) => (
+                            {stepsState.map((step: Question, index: number) => (
                                 <div key={`${step.title}_${index}_div`} className={`${index != 0 ? 'w-full' : 'w-auto'} flex flex-row`}>
                                     {index != 0 &&
                                         <div key={`${step.title}_${index}_hr`} className="w-full">
@@ -196,39 +182,19 @@ const Advisor: NextPage = () => {
                         </a>
                         {showContinueButton() &&
                             <a onClick={() => { setFinishedQuestionsState(true) }}>
-                                <CustomButton title="Continue" />
+                                <CustomLink href="/baskets" title="Continue" type="button" />
                             </a>
                         }
                         {!showContinueButton() &&
-                            <a className="ml-2" onClick={() => activatePreviousButton() ? goToPreviousStep() : ''}>
+                            <a className="ml-2" onClick={() => activatePreviousButton() ? goToPreviousQuestion() : ''}>
                                 <CustomButton title="Previous" disabled={!activatePreviousButton()} />
                             </a>
                         }
                         {!showContinueButton() &&
-                            <a className="ml-2" onClick={() => activateNextButton() ? goToNextStep() : ''}>
+                            <a className="ml-2" onClick={() => activateNextButton() ? goToNextQuestion() : ''}>
                                 <CustomButton title="Next" disabled={!activateNextButton()} />
                             </a>
                         }
-                    </div>
-                </div>
-            }
-            {finishedQuestions &&
-                <div className="w-full flex items-center justify-center">
-                    <div className='w-3/5'>
-                        <div>
-                            <h1 className="text-lg italic mb-2">Recommended asset distribution, based on your answers:</h1>
-                        </div>
-                        <div className="p-5 mb-5 border rounded-lg shadow-lg shadow-slate-100">
-                            <AssetSelector input={getResult()} />
-                        </div>
-                        <div className="w-full flex justify-between items-center">
-                            <a className="" onClick={() => setFinishedQuestionsState(false)}>
-                                <CustomButton title="Back to advisor" />
-                            </a>
-                            <a className="" onClick={() => console.log('continue')}>
-                                <CustomButton title="Continue" />
-                            </a>
-                        </div>
                     </div>
                 </div>
             }
