@@ -15,6 +15,9 @@ interface IBasketBlueprintRegistry {
         uint64 weight; // 8 bytes
     }
 
+    // later maybe: basketBluePrintNames array[]
+    // verified status of basketBluePrint
+
     event BasketBlueprintDefined(bytes32 basketBlueprintName, address owner);
     event BasketBlueprintOwnerChanged(
         bytes32 basketBlueprintName,

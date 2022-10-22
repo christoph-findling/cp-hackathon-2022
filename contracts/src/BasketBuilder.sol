@@ -11,12 +11,13 @@ import {IChargedState} from "./external/charged-particles/IChargedState.sol";
 
 import {IBasketBlueprintRegistry} from "./interfaces/IBasketBlueprintRegistry.sol";
 import {IBasketManager} from "./interfaces/IBasketManager.sol";
+import {MultiSwap} from "./MultiSwap.sol";
 
 error BasketBuilder__BasketBlueprintNotDefined();
 error BasketBuilder__Unauthorized();
 error BasketBuilder__InvalidParams();
 
-contract BasketBuilder is Ownable {
+contract BasketBuilder is MultiSwap, Ownable {
     using SafeERC20 for IERC20;
 
     // default hardcoded values for now for formula "modifiers"
@@ -33,15 +34,54 @@ contract BasketBuilder is Ownable {
         IBasketBlueprintRegistry _basketBlueprintRegistry,
         IBasketManager _basketManager,
         IProtonB _protonB,
-        IChargedParticles _chargedParticles
-    ) Ownable() {
+        IChargedParticles _chargedParticles,
+        address _swapTarget
+    ) MultiSwap(_swapTarget) Ownable() {
         basketBlueprintRegistry = _basketBlueprintRegistry;
         basketManager = _basketManager;
         protonB = _protonB;
         chargedParticles = _chargedParticles;
     }
 
-    // expects transferFrom from msg.sender for each asset is executable (builder is swaps logic agnostic)
+    function swapAndBuild(
+        IERC20 inputToken,
+        uint256 maxAmountInputToken,
+        bytes[] calldata swapQuotes,
+        bytes32 basketBlueprintName,
+        address receiver,
+        uint32 riskRate,
+        uint256 unlockBlock
+    ) external {
+        IBasketBlueprintRegistry.BasketAsset[]
+            memory basketAssets = _validBasketBlueprint(basketBlueprintName);
+
+        IERC20[] memory toAssets;
+        for (uint256 i = 0; i < basketAssets.length; ++i) {
+            toAssets[i] = basketAssets[i].asset;
+        }
+
+        uint256[] memory assetAmounts = multiSwap(
+            inputToken,
+            maxAmountInputToken,
+            toAssets,
+            swapQuotes
+        );
+
+        _validBuildValues(basketAssets, riskRate, assetAmounts);
+
+        uint256 tokenId = _buildBasket(
+            basketAssets,
+            assetAmounts,
+            receiver,
+            unlockBlock
+        );
+
+        // store particle token Id -> basketBlueprintName, user riskRate in BasketManager
+        basketManager.createBasketMeta(tokenId, basketBlueprintName, riskRate);
+    }
+
+    /// expects transferFrom from msg.sender for each asset is executable (this is swaps logic agnostic)
+    /// use swapAndBuild instead if going from one input token to a basket directly
     /// @param assetAmounts amount for each basketBlueprint asset in the same order (!)
     ///                     as basketAssets (BasketBlueprintRegistry.basketBlueprintAssets())
     function build(
@@ -52,9 +92,18 @@ contract BasketBuilder is Ownable {
         uint256 unlockBlock
     ) external {
         IBasketBlueprintRegistry.BasketAsset[]
-            memory basketAssets = _validBasket(basketBlueprintName);
+            memory basketAssets = _validBasketBlueprint(basketBlueprintName);
 
         _validBuildValues(basketAssets, riskRate, assetAmounts);
+
+        // transferFrom each basketAsset in; according to assetAmounts (assumes ERC20 approve has been executed)
+        for (uint256 i = 0; i < basketAssets.length; ++i) {
+            basketAssets[i].asset.safeTransferFrom(
+                msg.sender,
+                address(this),
+                assetAmounts[i]
+            );
+        }
 
         uint256 tokenId = _buildBasket(
             basketAssets,
@@ -79,7 +128,7 @@ contract BasketBuilder is Ownable {
         uint256 inputAmount
     ) public view returns (address[] memory assets, uint256[] memory amounts) {
         IBasketBlueprintRegistry.BasketAsset[]
-            memory basketAssets = _validBasket(basketBlueprintName);
+            memory basketAssets = _validBasketBlueprint(basketBlueprintName);
 
         uint256 amountsSum;
         (amounts, assets, amountsSum) = _getBasketAssetsRatios(
@@ -143,20 +192,11 @@ contract BasketBuilder is Ownable {
 
     function _buildBasket(
         IBasketBlueprintRegistry.BasketAsset[] memory basketAssets,
-        uint256[] calldata assetAmounts,
+        uint256[] memory assetAmounts,
         address receiver,
         uint256 unlockBlock
     ) internal returns (uint256 tokenId) {
-        // 1. transferFrom each basketAsset in according to assetAmounts (assumes ERC20 approve has been executed)
-        for (uint256 i = 0; i < basketAssets.length; ++i) {
-            basketAssets[i].asset.safeTransferFrom(
-                msg.sender,
-                address(this),
-                assetAmounts[i]
-            );
-        }
-
-        // 2. create charged particle NFT with first asset wrapped
+        // 1. create charged particle NFT with first asset wrapped
         basketAssets[0].asset.safeApprove(address(protonB), assetAmounts[0]);
 
         tokenId = protonB.createChargedParticle(
@@ -165,15 +205,18 @@ contract BasketBuilder is Ownable {
             address(0), // referrer
             "", // tokenMetaUri -> to-do later
             "", // walletManagerId -> @TODO what is the walletManagerId??
+            // is this the chargedParticles.getManagersAddress()? is that the Charged Settings contract?
+            // or can I simply set a custom walletManagerId here that represents us as creator? E.g. "testudo"
             address(basketAssets[0].asset), // assetToken
             assetAmounts[0], // assetAmount
             0 // annuityPercent
         );
 
-        // 3. ChargedParticles.energizeParticle forEach asset (except first, which is already in)
+        // 2. ChargedParticles.energizeParticle forEach asset (except first, which is already in)
         for (uint256 i = 1; i < basketAssets.length; ++i) {
             // The account must approve THIS (ChargedParticles.sol) contract as operator of the asset. ?
-            // "as operator" -> @TODO what does this mean? is approve enough?
+            // "as operator" -> @TODO what does this mean? is approve for the ERC20 enough?
+            // how can the account approve someone as operator?
             basketAssets[i].asset.safeApprove(
                 address(chargedParticles),
                 assetAmounts[i]
@@ -181,33 +224,66 @@ contract BasketBuilder is Ownable {
 
             chargedParticles.energizeParticle(
                 // The address to the contract of the token (Particle)
-                address(protonB), // contractAddress ... @TODO -> is this ProtonB?
+                address(0), // contractAddress ... @TODO -> is this the address to the tokens smart wallet?
+                // how do I get that address?
                 tokenId, // tokenId
-                "", // walletManagerId -> @TODO what is the walletManagerId??
+                "", // walletManagerId -> same as above
                 address(basketAssets[i].asset), // assetToken
                 assetAmounts[i], // assetAmount
                 address(0) // referrer
             );
         }
 
+        IChargedState chargedState = IChargedState(
+            chargedParticles.getStateAddress()
+        );
         if (unlockBlock != 0) {
             // @TODO: for timelock until a certain block (We don't use bonds) -> is releaseTimelock correct?
-            IChargedState chargedState = IChargedState(
-                chargedParticles.getStateAddress()
-            );
             chargedState.setReleaseTimelock(
-                address(protonB), // contractAddress ... @TODO -> is this ProtonB?
+                address(0), // contractAddress ... same as above
                 tokenId, // tokenId
                 unlockBlock
             );
             // @TODO: do we have to get permisions somehow first to execute this?
         }
+
+        // @TODO: restrict charge / discharge etc. -> should only be possible through protocol to make sure
+        // protocol basket metadata is in line with basket contents
+        // Does it make sense to call each one individually? is there a better way?
+        // @TODO 2: when the user wants to withdraw part of the basket and does this through our protocol
+        // would we first execute chargedState.setPermsForAllowDischarge to false etc., then withdraw
+        // and at the end  set it to true again?
+        chargedState.setPermsForRestrictCharge(
+            address(0), // contractAddress... same as above
+            tokenId,
+            true
+        );
+        chargedState.setPermsForAllowDischarge(
+            address(0), // contractAddress... same as above
+            tokenId,
+            false
+        );
+        chargedState.setPermsForAllowRelease(
+            address(0), // contractAddress... same as above
+            tokenId,
+            false
+        );
+        chargedState.setPermsForRestrictBond(
+            address(0), // contractAddress... same as above
+            tokenId,
+            false
+        );
+        chargedState.setPermsForAllowBreakBond(
+            address(0), // contractAddress... same as above
+            tokenId,
+            false
+        );
     }
 
     function _validBuildValues(
         IBasketBlueprintRegistry.BasketAsset[] memory basketAssets,
         uint32 riskRate,
-        uint256[] calldata assetAmounts
+        uint256[] memory assetAmounts
     ) internal view {
         if (
             basketAssets.length > 0 &&
@@ -236,7 +312,7 @@ contract BasketBuilder is Ownable {
         }
     }
 
-    function _validBasket(bytes32 basketBlueprintName)
+    function _validBasketBlueprint(bytes32 basketBlueprintName)
         internal
         view
         returns (IBasketBlueprintRegistry.BasketAsset[] memory basketAssets)

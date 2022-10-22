@@ -126,8 +126,8 @@ interface IChargedParticles {
     ) external returns (bool success);
 
     /***********************************|
-  |          Particle Events          |
-  |__________________________________*/
+    |          Particle Events          |
+    |__________________________________*/
 
     event Initialized(address indexed initiator);
     event ControllerSet(address indexed controllerAddress, string controllerId);
