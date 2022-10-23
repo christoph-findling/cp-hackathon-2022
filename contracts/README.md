@@ -11,10 +11,6 @@ Run:
 -   run `make node` in one terminal (this will run a local node with anvil)
 -   run `make run` in another terminal (this will deploy all contracts and create an initial state with a defined Basket "DEFAULT")
 
-Demo use:
-
--   use basket-demo-sdk.ts in /tslib. Execute `init()` first
-
 ---
 
 _Note: This repo has been recently updated for Goerli_

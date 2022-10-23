@@ -49,7 +49,7 @@ contract InitDemoState is Script {
 
         console.log("BasketBuilder deployed at: ", address(basketBuilder));
 
-        bytes32 defaultbasketBlueprintName = "DEFAULT";
+        bytes32 defaultbasketBlueprintName = "DiversifiedBasket";
         address defaultOwner = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
 
         IBasketBlueprintRegistry.BasketAsset[]
@@ -66,6 +66,13 @@ contract InitDemoState is Script {
         );
 
         vm.stopBroadcast();
+
+        // give the default account at [0] some usdc for swapping
+        // address usdcWhale = 0x06959153B974D0D5fDfd87D561db6d8d4FA0bb0B;
+        // vm.prank(usdcWhale);
+
+        // // transfer 1MM USDC to owner
+        // IERC20(usdc).transfer(defaultOwner, 10_000_000 * 1e6);
     }
 
     function _getDefaultAssets()

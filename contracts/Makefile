@@ -15,7 +15,7 @@ install :; forge install openzeppelin/openzeppelin-contracts && forge install fo
 # Update Dependencies
 update:; forge update
 
-build:; forge build && npx typechain --target=ethers-v5 "./out/**/*.json"
+build:; forge build && npx typechain --target=ethers-v5 --out-dir "../client/contract-types" "./out/**/*.json" 
 
 test :; forge test 
 
