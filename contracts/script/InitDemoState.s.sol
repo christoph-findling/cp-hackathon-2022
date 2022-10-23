@@ -64,15 +64,14 @@ contract InitDemoState is Script {
         console.log(
             "Default basket blueprint defined. \n\n------------------------------------\n\n"
         );
-
         vm.stopBroadcast();
 
         // give the default account at [0] some usdc for swapping
-        // address usdcWhale = 0x06959153B974D0D5fDfd87D561db6d8d4FA0bb0B;
-        // vm.prank(usdcWhale);
+        address usdcWhale = 0x06959153B974D0D5fDfd87D561db6d8d4FA0bb0B;
+        vm.prank(usdcWhale);
 
-        // // transfer 1MM USDC to owner
-        // IERC20(usdc).transfer(defaultOwner, 10_000_000 * 1e6);
+        // transfer 1MM USDC to owner
+        IERC20(usdc).transfer(defaultOwner, 6_000_000 * 1e6);
     }
 
     function _getDefaultAssets()
