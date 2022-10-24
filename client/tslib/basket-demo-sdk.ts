@@ -13,11 +13,11 @@ const NFT_STORAGE_API_KEY = process.env.REACT_APP_NFT_STORAGE_API_KEY || ''
 export class BasketDemoSdk {
   public readonly defaultBasketBlueprintName = utils.formatBytes32String('DiversifiedBasket')
   public readonly usdc = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
-  
-  public signer: Signer | null = null;
 
-  public async init(signer: Signer) {
-    this.signer = signer;
+  public signer: Signer | null = null
+
+  public init(signer: Signer) {
+    this.signer = signer
   }
 
   public async getOwner() {
@@ -183,8 +183,7 @@ export class BasketDemoSdk {
   }
 
   private _getSigner() {
-    // const { data: signer } = useSigner()
-    return this.signer as Signer;
+    return this.signer as Signer
   }
 
   private _getProvider() {
