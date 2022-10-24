@@ -7,13 +7,41 @@
         "src/**/*.sol"
     ],
     "devDependencies": {
-        "@nomiclabs/hardhat-ethers": "^2.2.0",
         "@typechain/ethers-v5": "^10.1.0",
-        "ethers": "^5.7.2",
-        "hardhat": "^2.12.0",
         "prettier": "^2.7.1",
         "prettier-plugin-solidity": "^1.0.0-beta.19",
-        "query-string": "^7.1.1",
+        "typechain": "^8.1.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/christoph-findling/cp-hackathon-2022.git"
+    },
+    "bugs": {
+        "url": "https://github.com/christoph-findling/cp-hackathon-2022/issues"
+    },
+    "scripts": {
+        "setup": "make clean && make build",
+        "sync": "make update",
+        "test": "make test",
+        "snapshot": "make snapshot",
+        "format": "make format",
+        "lint": "make lint",
+        "all": "make all"
+    }
+}
+
+{
+    "name": "cp-hackathon-2022-contracts",
+    "version": "0.0.1",
+    "description": "Charged particles hackathon 2022",
+    "license": "No License",
+    "files": [
+        "src/**/*.sol"
+    ],
+    "devDependencies": {
+        "@typechain/ethers-v5": "^10.1.0",
+        "prettier": "^2.7.1",
+        "prettier-plugin-solidity": "^1.0.0-beta.19",
         "typechain": "^8.1.0"
     },
     "repository": {
