@@ -89,6 +89,8 @@ export class BasketDemoSdk {
     const nftMetadataUri = await this._storeNFTMetadata(
       this.defaultBasketBlueprintName,
       nftImageSvgString,
+      userRiskRate,
+      unlockBlock,
     )
 
     const tx = await basketBuilder.swapAndBuild(
@@ -153,13 +155,23 @@ export class BasketDemoSdk {
     return await fetch(`https://polygon.api.0x.org/swap/v1/quote?${stringify(params)}`)
   }
 
-  private async _storeNFTMetadata(basketBlueprintName: string, svgString: string): Promise<string> {
+  private async _storeNFTMetadata(
+    basketBlueprintName: string,
+    svgString: string,
+    userRiskRate: number,
+    unlockBlock: number,
+  ): Promise<string> {
     const client = new NFTStorage({ token: NFT_STORAGE_API_KEY })
     const imageBlob = new Blob([svgString], { type: 'image/svg+xml' })
     const metadata = await client.store({
-      name: `${basketBlueprintName}`,
-      description: 'Portfolio Basket for Testudo Charged Particles Hackathon 2022',
+      name: 'PortfolioBasket',
+      description: 'Sample Portfolio Basket for Testudo Charged Particles Hackathon 2022',
       image: imageBlob,
+      properties: {
+        riskRate: userRiskRate,
+        basketBlueprintName,
+        unlockBlock,
+      },
     })
     console.log('Metadata stored on Filecoin and IPFS with URL:', metadata.url)
 
