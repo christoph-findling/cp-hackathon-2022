@@ -51,8 +51,9 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
         bytes32 basketBlueprintName,
         address receiver,
         uint32 riskRate,
+        string memory tokenMetaUri,
         uint256 unlockBlock
-    ) external {
+    ) external returns (uint256 tokenId) {
         IBasketBlueprintRegistry.BasketAsset[]
             memory basketAssets = _validBasketBlueprint(basketBlueprintName);
 
@@ -70,10 +71,11 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
 
         _validBuildValues(basketAssets, riskRate, assetAmounts);
 
-        uint256 tokenId = _buildBasket(
+        tokenId = _buildBasket(
             basketAssets,
             assetAmounts,
             receiver,
+            tokenMetaUri,
             unlockBlock
         );
 
@@ -90,8 +92,9 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
         address receiver,
         uint32 riskRate,
         uint256[] calldata assetAmounts,
+        string memory tokenMetaUri,
         uint256 unlockBlock
-    ) external {
+    ) external returns (uint256 tokenId) {
         IBasketBlueprintRegistry.BasketAsset[]
             memory basketAssets = _validBasketBlueprint(basketBlueprintName);
 
@@ -106,10 +109,11 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
             );
         }
 
-        uint256 tokenId = _buildBasket(
+        tokenId = _buildBasket(
             basketAssets,
             assetAmounts,
             receiver,
+            tokenMetaUri,
             unlockBlock
         );
 
@@ -195,6 +199,7 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
         IBasketBlueprintRegistry.BasketAsset[] memory basketAssets,
         uint256[] memory assetAmounts,
         address receiver,
+        string memory tokenMetaUri,
         uint256 unlockBlock
     ) internal returns (uint256 tokenId) {
         // 1. create charged particle NFT with first asset wrapped
@@ -204,7 +209,7 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
             owner(), // creator
             receiver, // receiver
             address(0), // referrer
-            "", // tokenMetaUri -> to-do later
+            tokenMetaUri, // tokenMetaUri
             "", // walletManagerId -> @TODO what is the walletManagerId??
             // is this the chargedParticles.getManagersAddress()? is that the Charged Settings contract?
             // or can I simply set a custom walletManagerId here that represents us as creator? E.g. "testudo"

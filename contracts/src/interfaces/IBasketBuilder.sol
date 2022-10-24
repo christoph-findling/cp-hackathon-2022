@@ -11,16 +11,18 @@ interface IBasketBuilder {
         bytes32 basketBlueprintName,
         address receiver,
         uint32 riskRate,
+        string memory tokenMetaUri,
         uint256 unlockBlock
-    ) external;
+    ) external returns (uint256 tokenId);
 
     function build(
         bytes32 basketBlueprintName,
         address receiver,
         uint32 riskRate,
         uint256[] calldata assetAmounts,
+        string memory tokenMetaUri,
         uint256 unlockBlock
-    ) external;
+    ) external returns (uint256 tokenId);
 
     /// @notice Returns the amounts of input asset that should be spent for each basket asset given a certain risk rate
     /// @param basketBlueprintName   basketBlueprint name as in BasketBlueprintRegistry
