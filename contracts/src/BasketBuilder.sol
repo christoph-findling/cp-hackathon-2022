@@ -24,8 +24,8 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
     using SafeERC20 for IERC20;
 
     // default hardcoded values for now for formula "modifiers"
-    uint32 public constant dx = 5; // increases significance of difference user risk Rate to asset risk rate
-    uint32 public constant wx = 2; // increases significance of basketAsset weight
+    uint32 public constant dx = 7; // increases significance of difference user risk Rate to asset risk rate
+    uint32 public constant wx = 1; // increases significance of basketAsset weight
 
     IBasketBlueprintRegistry public immutable basketBlueprintRegistry;
     IBasketManager public immutable basketManager;
