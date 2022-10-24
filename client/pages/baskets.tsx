@@ -52,38 +52,38 @@ const checkmarkSVG = () => {
 }
 
 const Baskets: NextPage = () => {
-  return (
-    <Layout>
-      <h1 className='text-2xl text-center mb-4'>Select a basket</h1>
-      {baskets.map((basket, index) => (
-        <div
-          className={`flex justify-around items-center border rounded my-2 p-2  ${
-            basket.active ? 'cursor-pointer drop-shadow-lg bg-white' : 'opacity-30 cursor-default'
-          }`}
-          key={`basket_${basket.name}_${index}`}
-        >
-          <div className='w-1/5'>
-            <Image width='40' height='40' src={`/icons/${basket.logo}`} />
-          </div>
-          <div className='w-1/5'>
-            <span>{basket.name}</span>
-          </div>
-          <div className='w-1/5'>
-            <span>Risk: {basket.risk}%</span>
-          </div>
-          <div className='w-1/5'>
-            <span>
-              <strong>{basket.matchRate}%</strong> match rate
-            </span>
-          </div>
-          <div className='w-1/5 justify-center flex'>{basket.active && checkmarkSVG()}</div>
-        </div>
-      ))}
-      <div className='flex justify-end mt-6'>
-        <CustomLink type='button' title='Continue' href='/portfolio' />
-      </div>
-    </Layout>
-  )
+	return (
+		<Layout>
+			<h1 className='text-2xl text-center mb-4'>Select a basket</h1>
+			{baskets.map((basket, index) => (
+				<div
+					className={`flex justify-around items-center border rounded my-2 p-2  ${
+						basket.active ? 'cursor-pointer drop-shadow-lg bg-white' : 'opacity-30 cursor-default'
+					}`}
+					key={`basket_${basket.name}_${index}`}
+				>
+					<div className='w-1/5'>
+						<Image width='40' height='40' src={`/icons/${basket.logo}`} />
+					</div>
+					<div className='w-1/5'>
+						<span>{basket.name}</span>
+					</div>
+					<div className='w-1/5'>
+						<span>Risk: {basket.risk}%</span>
+					</div>
+					<div className='w-1/5'>
+						<span>
+							<strong>{basket.matchRate}%</strong> match rate
+						</span>
+					</div>
+					<div className='w-1/5 justify-center flex'>{basket.active && checkmarkSVG()}</div>
+				</div>
+			))}
+			<div className='flex justify-end mt-6'>
+				<CustomLink type='button' title='Continue' href='/portfolio' />
+			</div>
+		</Layout>
+	)
 }
 
 export default Baskets

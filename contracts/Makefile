@@ -38,4 +38,6 @@ deploy-anvil :; @forge script script/${contract}.s.sol:Deploy${contract} --rpc-u
 
 deploy-all :; make deploy-${network} contract=BasketBlueprintRegistry && make deploy-${network} contract=BasketBuilder && make deploy-${network} contract=BasketManager 
 
-node :; anvil -m 'test test test test test test test test test test test junk' --fork-url https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}  
+node :; anvil -m 'test test test test test test test test test test test junk' --fork-url https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY} --chain-id 1337
+
+run :; make build && forge script script/InitDemoState.s.sol:InitDemoState --rpc-url http://localhost:8545  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast

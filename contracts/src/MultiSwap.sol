@@ -24,6 +24,8 @@ contract MultiSwap {
         // for now per default via 0x, later there could be
         // adapters, e.g. 0xAdapter etc. which can be defined per token?
 
+        obtainedAmounts = new uint256[](swapQuotes.length);
+
         inputToken.safeTransferFrom(
             msg.sender,
             address(this),

@@ -18,11 +18,13 @@ error BasketBuilder__BasketBlueprintNotDefined();
 error BasketBuilder__Unauthorized();
 error BasketBuilder__InvalidParams();
 
+import "forge-std/console.sol";
+
 contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
     using SafeERC20 for IERC20;
 
     // default hardcoded values for now for formula "modifiers"
-    uint32 public constant dx = 2; // increases significance of difference user risk Rate to asset risk rate
+    uint32 public constant dx = 7; // increases significance of difference user risk Rate to asset risk rate
     uint32 public constant wx = 1; // increases significance of basketAsset weight
 
     IBasketBlueprintRegistry public immutable basketBlueprintRegistry;
@@ -57,7 +59,7 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
         IBasketBlueprintRegistry.BasketAsset[]
             memory basketAssets = _validBasketBlueprint(basketBlueprintName);
 
-        IERC20[] memory toAssets;
+        IERC20[] memory toAssets = new IERC20[](basketAssets.length);
         for (uint256 i = 0; i < basketAssets.length; ++i) {
             toAssets[i] = basketAssets[i].asset;
         }
@@ -165,6 +167,9 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
         if (riskRate > basketBlueprintRegistry.riskRateMaxValue()) {
             revert BasketBuilder__InvalidParams();
         }
+
+        amounts = new uint256[](basketAssets.length);
+        assets = new address[](basketAssets.length);
 
         // get basketBlueprint amounts generalized not specific to inputAmount yet
         for (uint256 i = 0; i < basketAssets.length; ++i) {
