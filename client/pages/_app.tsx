@@ -1,21 +1,18 @@
 import '../styles/globals.css'
-import '@rainbow-me/rainbowkit/styles.css';
+import '@rainbow-me/rainbowkit/styles.css'
 
 import type { AppProps } from 'next/app'
 import { useStore } from 'react-redux'
-import { PersistGate } from 'redux-persist/integration/react';
-import { wrapper } from '../store/store';
+import { PersistGate } from 'redux-persist/integration/react'
+import { wrapper } from '../store/store'
 
-import { alchemyProvider } from 'wagmi/providers/alchemy';
-import { publicProvider } from 'wagmi/providers/public';
-import { getDefaultWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit';
-import { configureChains, chain, createClient, WagmiConfig, Chain } from 'wagmi';
+import { alchemyProvider } from 'wagmi/providers/alchemy'
+import { publicProvider } from 'wagmi/providers/public'
+import { getDefaultWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { configureChains, chain, createClient, WagmiConfig, Chain } from 'wagmi'
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 
-
-
 function MyApp({ Component, pageProps }: AppProps) {
-
   const localChain: Chain = {
     id: 137,
     name: 'LocalPolygonChain',
@@ -38,34 +35,33 @@ function MyApp({ Component, pageProps }: AppProps) {
   const { chains, provider } = configureChains(
     [localChain],
     // [ alchemyProvider({ apiKey: 'dDEHfJFvReWVH3JNKtyzSi2B6UX_fWVG' })    ]
-    [ 
+    [
       jsonRpcProvider({
         rpc: (chain) => {
           if (chain.id !== localChain.id) return null
           return { http: chain.rpcUrls.default }
         },
       }),
-     ]
-  );
+    ],
+  )
 
   const { connectors } = getDefaultWallets({
     appName: 'My RainbowKit App',
-    chains
-  });
+    chains,
+  })
 
   const wagmiClient = createClient({
     autoConnect: true,
     connectors,
-    provider
+    provider,
   })
 
-
-  const store = useStore();
+  const store = useStore()
 
   return (
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    <PersistGate loading={null} persistor={store._persist} >
+    <PersistGate loading={null} persistor={store._persist}>
       <WagmiConfig client={wagmiClient}>
         <RainbowKitProvider chains={chains}>
           <Component {...pageProps}></Component>

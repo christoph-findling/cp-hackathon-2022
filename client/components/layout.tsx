@@ -15,8 +15,7 @@ export default function Layout({ children }: any) {
           </div>
         </main>
       </div>
-      <div className='fixed bottom-0 w-full'>
-      </div>
+      <div className='fixed bottom-0 w-full'></div>
     </>
   )
 }
