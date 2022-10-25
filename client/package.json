@@ -11,6 +11,7 @@
   "dependencies": {
     "@fontsource/roboto": "^4.5.8",
     "@mui/base": "^5.0.0-alpha.101",
+    "@rainbow-me/rainbowkit": "^0.7.3",
     "@reduxjs/toolkit": "^1.8.6",
     "d3-node": "^3.0.0",
     "dotenv": "^16.0.3",
@@ -22,8 +23,9 @@
     "react": "18.1.0",
     "react-dom": "18.1.0",
     "react-redux": "^8.0.4",
+    "redux-persist": "^6.0.0",
     "styled-components": "^5.3.6",
-    "wagmi": "^0.7.5"
+    "wagmi": "^0.6.8"
   },
   "devDependencies": {
     "@types/node": "17.0.35",

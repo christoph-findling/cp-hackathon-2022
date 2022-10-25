@@ -14,7 +14,7 @@ contract BasketBlueprintRegistry is
     IBasketBlueprintRegistry
 {
     uint32 public constant riskRateMaxValue = 100_000_000;
-    uint64 public constant defaultWeight = 10_000_000;
+    uint32 public constant defaultWeight = 10_000_000;
 
     mapping(bytes32 => address) internal _basketBlueprintOwners;
     mapping(bytes32 => BasketAsset[]) internal _basketBlueprintAssets;
@@ -113,7 +113,7 @@ contract BasketBlueprintRegistry is
         uint256 weightsSum; // = SUM (asset weights)
         for (uint256 i = 0; i < assets.length; ++i) {
             // unchecked is ok here because riskRate is max uint32 (actually even riskRateMaxValue)
-            // and asset weight is max uint64, multiplied fits easily into uint256
+            // and asset weight is max uint32, multiplied fits easily into uint256
             unchecked {
                 weightedRiskRatesSum +=
                     (assets[i].riskRate * assets[i].weight) /
@@ -137,7 +137,9 @@ contract BasketBlueprintRegistry is
             if (
                 address(assets[i].asset) == address(0) ||
                 assets[i].riskRate == 0 ||
-                assets[i].riskRate > riskRateMaxValue
+                assets[i].riskRate > riskRateMaxValue ||
+                assets[i].assetType > 1 // this has to be adjusted if more walletIdTypes become available...
+                // contract upgradeable or have a MAX_ASSET_TYPE adjustable and configurable by an owner?
             ) {
                 revert BasketBlueprintRegistry__InvalidParams();
             }

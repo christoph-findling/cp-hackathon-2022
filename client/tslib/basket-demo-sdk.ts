@@ -1,20 +1,24 @@
 import { useSigner, useProvider } from 'wagmi'
-import { BigNumber, Signer } from 'ethers'
+import { BigNumber, Signer, utils } from 'ethers'
 import { stringify } from 'query-string'
 import { NFTStorage } from 'nft.storage'
-import dotenv from 'dotenv'
-dotenv.config()
 
 /* eslint-disable camelcase */
 import { IBasketBlueprintRegistry__factory } from '../contract-types/factories/IBasketBlueprintRegistry__factory'
 import { IBasketManager__factory } from '../contract-types/factories/IBasketManager__factory'
 import { IBasketBuilder__factory } from '../contract-types/factories/IBasketBuilder__factory'
 
-const NFT_STORAGE_API_KEY = process.env.NFT_STORAGE_API_KEY || ''
+const NFT_STORAGE_API_KEY = process.env.REACT_APP_NFT_STORAGE_API_KEY || ''
 
 export class BasketDemoSdk {
-  public readonly defaultBasketBlueprintName = 'DiversifiedBasket'
+  public readonly defaultBasketBlueprintName = utils.formatBytes32String('DiversifiedBasket')
   public readonly usdc = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
+
+  public signer: Signer | null = null
+
+  public init(signer: Signer) {
+    this.signer = signer
+  }
 
   public async getOwner() {
     return this._getSigner()
@@ -179,8 +183,7 @@ export class BasketDemoSdk {
   }
 
   private _getSigner() {
-    const { data: signer } = useSigner()
-    return signer as Signer
+    return this.signer as Signer
   }
 
   private _getProvider() {
