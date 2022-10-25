@@ -9,9 +9,7 @@ export interface ResultState {
 
 const initialState: ResultState =  {
     resultState: {
-      risky: 0,
-      mid: 0,
-      stable: 0,
+      assets: {},
       riskTolerance: 0
     }
 }
@@ -22,17 +20,13 @@ export const resultSlice = createSlice({
     reducers: {
         setResultState(state, action) {
             console.log('set result state');
-            console.log(state);
-            console.log(action.payload);
-            state.resultState = {...state, ...action.payload};
-            console.log(state)
+            state.resultState = {...action.payload};
             return state;
         },
     },
         extraReducers: {
             [HYDRATE]: (state, action) => {
                 console.log('hydrate result state');
-                console.log(action.payload);
               return {
                 ...state,
                 ...action.payload,

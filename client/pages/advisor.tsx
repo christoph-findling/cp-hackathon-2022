@@ -22,9 +22,9 @@ export interface Question {
 }
 
 export interface Result {
-	risky: number
-	mid: number
-	stable: number
+	assets: {
+		[key: string]: number
+	}
 	riskTolerance: number
 }
 
