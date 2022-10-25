@@ -30,7 +30,7 @@ function generateChart(data) {
 	var height = 250
 	var margin = 10
 	var fontSize = 18
-	var legendPositionY = 70;
+	var legendPositionY = 70
 
 	var svg = d3n.createSVG(canvasWidth, canvasHeight)
 
@@ -67,7 +67,6 @@ function generateChart(data) {
 		.style('stroke-width', '1px')
 		.style('opacity', 0.8)
 
-
 	svg
 		.selectAll('whatever')
 		.data(dataRdy)
@@ -78,7 +77,13 @@ function generateChart(data) {
 		})
 		.attr('font-size', fontSize)
 		.attr('transform', function (d, index) {
-			return 'translate(' + (width + 25) + ',' + (height / 2 - legendPositionY - 2 + index * (fontSize + 8)) + ')'
+			return (
+				'translate(' +
+				(width + 25) +
+				',' +
+				(height / 2 - legendPositionY - 2 + index * (fontSize + 8)) +
+				')'
+			)
 		})
 
 	svg
@@ -94,7 +99,13 @@ function generateChart(data) {
 		.attr('cx', 0)
 		.attr('cy', -8)
 		.attr('transform', function (d, index) {
-			return 'translate(' + (width + 10) + ',' + (height / 2 - legendPositionY + index * (fontSize + 8)) + ')'
+			return (
+				'translate(' +
+				(width + 10) +
+				',' +
+				(height / 2 - legendPositionY + index * (fontSize + 8)) +
+				')'
+			)
 		})
 
 	var string = d3n.svgString()

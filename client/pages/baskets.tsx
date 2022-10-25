@@ -4,51 +4,51 @@ import Image from 'next/image'
 import CustomLink from '../components/link'
 
 export interface Basket {
-  name: string
-  risk: number
-  logo: string
-  active: boolean
-  matchRate: number
+	name: string
+	risk: number
+	logo: string
+	active: boolean
+	matchRate: number
 }
 
 const baskets: Basket[] = [
-  {
-    name: 'testudo basket',
-    risk: 50,
-    logo: 'icons8-stocks.png',
-    matchRate: 100,
-    active: true,
-  },
-  {
-    name: 'community basket',
-    risk: 20,
-    logo: 'icons8-people.png',
-    matchRate: 65,
-    active: false,
-  },
-  {
-    name: 'rrrrrisky basket',
-    risk: 100,
-    logo: 'icons8-fire.png',
-    matchRate: 38,
-    active: false,
-  },
+	{
+		name: 'testudo basket',
+		risk: 50,
+		logo: 'icons8-stocks.png',
+		matchRate: 100,
+		active: true,
+	},
+	{
+		name: 'community basket',
+		risk: 20,
+		logo: 'icons8-people.png',
+		matchRate: 65,
+		active: false,
+	},
+	{
+		name: 'rrrrrisky basket',
+		risk: 100,
+		logo: 'icons8-fire.png',
+		matchRate: 38,
+		active: false,
+	},
 ]
 
 const checkmarkSVG = () => {
-  return (
-    <svg
-      width='25'
-      height='25'
-      className='color-white bg-white fill-green-500'
-      focusable='false'
-      aria-hidden='true'
-      viewBox='0 0 24 24'
-      data-testid='CheckCircleIcon'
-    >
-      <path d='M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24zm-2 17l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z'></path>
-    </svg>
-  )
+	return (
+		<svg
+			width='25'
+			height='25'
+			className='color-white bg-white fill-green-500'
+			focusable='false'
+			aria-hidden='true'
+			viewBox='0 0 24 24'
+			data-testid='CheckCircleIcon'
+		>
+			<path d='M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24zm-2 17l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z'></path>
+		</svg>
+	)
 }
 
 const Baskets: NextPage = () => {
