@@ -11,6 +11,7 @@ import { useSigner } from 'wagmi'
 import { Signer } from 'ethers'
 import { Result } from './advisor'
 import { useEffect, useRef, useState } from 'react'
+import { contractAddresses } from './contract-addresses'
 
 const Portfolio: NextPage = () => {
 	const resultState = useSelector(selectResultState)
@@ -23,24 +24,24 @@ const Portfolio: NextPage = () => {
 
 	const doThing = async () => {
 		setLoadingState(true)
-		const basket = new BasketDemoSdk()
-		basket.init(signer as Signer)
+		const basketSdk = new BasketDemoSdk()
+		basketSdk.init(signer as Signer)
 		console.log(resultState)
-		console.log('val ', basket.defaultBasketBlueprintName)
+		console.log('val ', basketSdk.defaultBasketBlueprintName)
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		const userRiskRate = resultState.riskTolerance
 		const inputAmount = 10000
-		const [assets, amounts] = await basket.getSpendAmounts(
-			'0xfCA7f990115e4Bd6134Db9D5A32885C9c362f677',
+		const [assets, amounts] = await basketSdk.getSpendAmounts(
+			contractAddresses.basketBuilder,
 			resultState.riskTolerance * 1e6,
 			inputAmount * 1e6,
 		)
-		// default basket verteilung
+		// default basket assets
 		// token 1: gold PAXG, 1%, default weight
-		// token 2: usdc, 5%, default weight
-		// token 3: wbtc, 10%, double weight
-		// token 4: weth, 20%, triple weight
+		// token 2: aUSDC, 5%, default weight
+		// token 3: aWBTC, 10%, double weight
+		// token 4: aWETH, 20%, triple weight
 		// token 5: dpi, 40%, default weight
 		// token 6: mvi, 65%, default weight
 		// token 7: ionx, 80%, double weight

@@ -2,6 +2,12 @@ import { NextPage } from 'next'
 import Layout from '../components/layout'
 import Image from 'next/image'
 import CustomLink from '../components/link'
+import { BasketDemoSdk } from '../tslib/basket-demo-sdk'
+import { useSigner } from 'wagmi'
+import { Signer } from 'ethers'
+
+import { contractAddresses } from './contract-addresses'
+import { useState } from 'react'
 
 export interface Basket {
 	name: string
@@ -52,6 +58,23 @@ const checkmarkSVG = () => {
 }
 
 const Baskets: NextPage = () => {
+	const [defaultBasketRiskRate, setDefaultBasketRiskRate] = useState(50)
+	const { data: signer, isError, isLoading } = useSigner()
+	// let defaultBasketRiskRate = 50
+
+	const init = async () => {
+		const basketSdk = new BasketDemoSdk()
+		basketSdk.init(signer as Signer)
+		const registry = await basketSdk.getBasketBlueprintRegistryAt(
+			contractAddresses.basketBlueprintRegistry,
+		)
+		setDefaultBasketRiskRate(
+			(await registry.basketBlueprintRiskRate(basketSdk.defaultBasketBlueprintName)).toNumber(),
+		)
+	}
+
+	init()
+
 	return (
 		<Layout>
 			<h1 className='text-2xl text-center mb-4'>Select a basket</h1>
@@ -69,7 +92,7 @@ const Baskets: NextPage = () => {
 						<span>{basket.name}</span>
 					</div>
 					<div className='w-1/5'>
-						<span>Risk: {basket.risk}%</span>
+						<span>Risk: {index === 0 ? defaultBasketRiskRate : basket.risk}%</span>
 					</div>
 					<div className='w-1/5'>
 						<span>
