@@ -212,12 +212,12 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
 
         tokenId = protonB.createChargedParticle(
             owner(), // creator
-            receiver, // receiver
+            address(this), // receiver -> this is initially this contract to have permissions for timelocking.
+            // the NFT is transferred to the receiver at the end of this process.
             address(0), // referrer
             tokenMetaUri, // tokenMetaUri
-            "", // walletManagerId -> @TODO what is the walletManagerId??
-            // is this the chargedParticles.getManagersAddress()? is that the Charged Settings contract?
-            // or can I simply set a custom walletManagerId here that represents us as creator? E.g. "testudo"
+            // walletManagerId -> either generic.B or aave.B (aave.B is yield bearing)
+            _mapAssetTypeToWalletManagerId(basketAssets[0].assetType),
             address(basketAssets[0].asset), // assetToken
             assetAmounts[0], // assetAmount
             0 // annuityPercent
@@ -225,70 +225,63 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
 
         // 2. ChargedParticles.energizeParticle forEach asset (except first, which is already in)
         for (uint256 i = 1; i < basketAssets.length; ++i) {
-            // The account must approve THIS (ChargedParticles.sol) contract as operator of the asset. ?
-            // "as operator" -> @TODO what does this mean? is approve for the ERC20 enough?
-            // how can the account approve someone as operator?
             basketAssets[i].asset.safeApprove(
                 address(chargedParticles),
                 assetAmounts[i]
             );
 
             chargedParticles.energizeParticle(
-                // The address to the contract of the token (Particle)
-                address(0), // contractAddress ... @TODO -> is this the address to the tokens smart wallet?
-                // how do I get that address?
+                address(protonB), // contractAddress -> The address to the contract of the NFT token (Particle)
                 tokenId, // tokenId
-                "", // walletManagerId -> same as above
+                _mapAssetTypeToWalletManagerId(basketAssets[i].assetType), // walletManagerId -> same as above
                 address(basketAssets[i].asset), // assetToken
                 assetAmounts[i], // assetAmount
                 address(0) // referrer
             );
         }
 
+        /**
+         * Timelocking does work like implemented below, but a crucial part is missing.
+         * This part has to be implemented next:
+         * With the current logic, after transferring the NFT to the "receiver",
+         * the "receiver" can freely interact with Charged Particles
+         * contracts. This can lead to invalid states in our BasketMetadata,
+         * and means that the "receiver" can lift the timelock or execute any other action on it.
+         *
+         * We can solve this by implementing an intermediary contract, a wallet contract that will
+         * be the owner of the NFT instead of the "receiver" directly. The "receiver" still has non-custodial
+         * access to the NFT, BUT the actions executable on it are within whatever boundaries we see fit.
+         * Also, this means that our BasketMetadata can be updated.
+         * Every user would get a clone of BasketManager and have his own BasketManager.
+         * This allows to implement the TrustAccount use-case,
+         * or pocket money (limited discharge amount per blocks) for a child.
+         * Each user gets a wallet, can be a EIP-1167 minimal proxy clone or BeaconProxy clone similar to
+         * https://github.com/notional-finance/wrapped-fcash/tree/master/contracts/proxy
+         *
+         * The tokenMetaUri of the protonB NFT is not modifiable so the off-chain metadata would either have to be
+         * permanent or it could use an IPFS naming service such as IPNS https://docs.ipfs.io/concepts/ipns/
+         * Permanent would be preferrable.
+         */
+
         IChargedState chargedState = IChargedState(
             chargedParticles.getStateAddress()
         );
         if (unlockBlock != 0) {
-            // @TODO: for timelock until a certain block (We don't use bonds) -> is releaseTimelock correct?
-            chargedState.setReleaseTimelock(
-                address(0), // contractAddress ... same as above
+            chargedState.setReleaseTimelock( // principle amount
+                address(protonB), // contractAddress
                 tokenId, // tokenId
                 unlockBlock
             );
-            // @TODO: do we have to get permisions somehow first to execute this?
+            chargedState.setDischargeTimelock( // yield amount
+                address(protonB), // contractAddress
+                tokenId, // tokenId
+                unlockBlock
+            );
         }
 
-        // @TODO: restrict charge / discharge etc. -> should only be possible through protocol to make sure
-        // protocol basket metadata is in line with basket contents
-        // Does it make sense to call each one individually? is there a better way?
-        // @TODO 2: when the user wants to withdraw part of the basket and does this through our protocol
-        // would we first execute chargedState.setPermsForAllowDischarge to false etc., then withdraw
-        // and at the end  set it to true again?
-        chargedState.setPermsForRestrictCharge(
-            address(0), // contractAddress... same as above
-            tokenId,
-            true
-        );
-        chargedState.setPermsForAllowDischarge(
-            address(0), // contractAddress... same as above
-            tokenId,
-            false
-        );
-        chargedState.setPermsForAllowRelease(
-            address(0), // contractAddress... same as above
-            tokenId,
-            false
-        );
-        chargedState.setPermsForRestrictBond(
-            address(0), // contractAddress... same as above
-            tokenId,
-            false
-        );
-        chargedState.setPermsForAllowBreakBond(
-            address(0), // contractAddress... same as above
-            tokenId,
-            false
-        );
+        // transfer NFT to receiver
+        protonB.approve(receiver, tokenId);
+        protonB.safeTransferFrom(address(this), receiver, tokenId);
     }
 
     function _validBuildValues(
@@ -376,6 +369,21 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
             } else {
                 return num2 - num1;
             }
+        }
+    }
+
+    function _mapAssetTypeToWalletManagerId(uint32 assetType)
+        public
+        pure
+        returns (string memory)
+    {
+        if (assetType == 0) {
+            return "generic.B";
+        } else if (assetType == 1) {
+            return "aave.B";
+        } else {
+            // not supported for now. If more walletManagerIds become available in the future this has to be adjusted
+            revert BasketBuilder__InvalidParams();
         }
     }
 }

@@ -12,7 +12,11 @@ interface IBasketBlueprintRegistry {
         uint32 riskRate; // 4 bytes
         // weight should be 1e6, i.e. a weight of 1 would be 1_000_000. default weight is 10_000_000
         // must be >0
-        uint64 weight; // 8 bytes
+        uint32 weight; // 4 bytes
+        // assetType is basically an Enum that is mapped to ChargedParticles walletManagerId
+        // 0 = "generic.B" (for generic all ERC20 tokens)
+        // 1 = "aave.B" (for yield bearing Aave tokens)
+        uint32 assetType; // 4 bytes
     }
 
     // later maybe: basketBluePrintNames array[]
@@ -27,7 +31,7 @@ interface IBasketBlueprintRegistry {
 
     function riskRateMaxValue() external view returns (uint32);
 
-    function defaultWeight() external view returns (uint64);
+    function defaultWeight() external view returns (uint32);
 
     function basketBlueprintDefined(bytes32 basketBlueprintName)
         external
