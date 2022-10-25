@@ -83,37 +83,44 @@ contract InitDemoState is Script {
         assets[0] = IBasketBlueprintRegistry.BasketAsset(
             IERC20(paxg),
             1_000_000, // riskRate -> 1%
-            0 // weight. 0 will set to default (10_000_000)
+            0, // weight. 0 will set to default (10_000_000)
+            0 // assetType generic.B
         );
         assets[1] = IBasketBlueprintRegistry.BasketAsset(
             IERC20(usdc),
             5_000_000, // riskRate -> 5%
-            0 // weight. 0 will set to default (10_000_000)
+            0, // weight. 0 will set to default (10_000_000)
+            1 // assetType aave.B yield bearing
         );
         assets[2] = IBasketBlueprintRegistry.BasketAsset(
             IERC20(wbtc),
             10_000_000, // riskRate -> 10%
-            20_000_000 // weight. double the default weight (10_000_000)
+            20_000_000, // weight. double the default weight (10_000_000)
+            1 // assetType aave.B yield bearing
         );
         assets[3] = IBasketBlueprintRegistry.BasketAsset(
             IERC20(weth),
             20_000_000, // riskRate -> 20%
-            30_000_000 // weight. triple the default weight (10_000_000)
+            30_000_000, // weight. triple the default weight (10_000_000)
+            1 // assetType aave.B yield bearing
         );
         assets[4] = IBasketBlueprintRegistry.BasketAsset(
             IERC20(dpi),
             40_000_000, // riskRate -> 40%
-            0 // weight. 0 will set to default (10_000_000)
+            0, // weight. 0 will set to default (10_000_000)
+            0 // assetType generic.B
         );
         assets[5] = IBasketBlueprintRegistry.BasketAsset(
             IERC20(mvi),
             70_000_000, // riskRate -> 65%
-            0 // weight. 0 will set to default (10_000_000)
+            0, // weight. 0 will set to default (10_000_000)
+            0 // assetType generic.B
         );
         assets[6] = IBasketBlueprintRegistry.BasketAsset(
             IERC20(ionx),
             80_000_000, // riskRate -> 80%
-            20_000_000 // weight. double the default weight (10_000_000)
+            20_000_000, // weight. double the default weight (10_000_000)
+            0 // assetType generic.B
         );
     }
 }
