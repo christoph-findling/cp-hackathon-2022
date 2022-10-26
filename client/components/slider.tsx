@@ -54,65 +54,45 @@ const loadingSvg = `<div style="display: flex; justify-content: center; align-it
 </svg></div>`
 
 const AssetSelector = ({
-	input,
 	interactive = false,
-	selectionStateChanged,
 	selectionChanged,
 }: {
-	input: Result
 	interactive?: boolean
-	selectionStateChanged?: any
 	selectionChanged?: any
 }) => {
-	const result = useSelector(selectResultState)
+	const resultState: Result = useSelector(selectResultState)
 
-	useEffect(() => {
-		generateChart()
-		const data: SliderData = {
+	const getMappedData = (): SliderData => {
+		const mappedData: SliderData = {
 			riskTolerance: {
-				currentVal: input.riskTolerance,
-				defaultVal: input.riskTolerance,
+				currentVal: resultState.riskTolerance,
+				defaultVal: resultState.riskTolerance,
 				maxVal: 100,
 			},
 			assets: {},
 		}
-		for (const key of Object.keys(input.assets)) {
-			data.assets[key] = {
-				currentVal: input.assets[key],
-				defaultVal: input.assets[key],
+		for (const key of Object.keys(resultState.assets)) {
+			mappedData.assets[key] = {
+				currentVal: resultState.assets[key],
+				defaultVal: resultState.assets[key],
 				maxVal: 100,
 			}
 		}
-		setState(JSON.parse(JSON.stringify(data)))
-	}, [result])
+		return mappedData
+	}
 
-	const initialState: SliderData = {
-		riskTolerance: {
-			currentVal: input.riskTolerance,
-			defaultVal: input.riskTolerance,
-			maxVal: 100,
-		},
-		assets: {},
-	}
-	for (const key of Object.keys(input.assets)) {
-		initialState.assets[key] = {
-			currentVal: input.assets[key],
-			defaultVal: input.assets[key],
-			maxVal: 100,
-		}
-	}
-	console.log(input)
-	console.log(initialState)
-	// let COMPSTATE = initialState;
-	const [COMPSTATE, setState] = useState(JSON.parse(JSON.stringify(initialState)))
-	// const COMPSTATE = initialState;
-	// useEffect(() => {
-	//   generateChart();
-	// }, [COMPSTATE])
+	useEffect(() => {
+		setState(JSON.parse(JSON.stringify(getMappedData())))
+	}, [resultState.assets])
+
+	const [COMPSTATE, setState] = useState(JSON.parse(JSON.stringify(getMappedData())))
+
+	useEffect(() => {
+		generateChart();
+	}, [COMPSTATE.riskTolerance])
 
 	const [chartState, setChartState] = useState({ chart: loadingSvg })
 
-	console.log(COMPSTATE)
 	const generateChart = () => {
 		setChartState({ chart: loadingSvg })
 
@@ -137,42 +117,25 @@ const AssetSelector = ({
 				})
 		}, 500)
 	}
-	// generateChart();
 
-	// Update maxVals each time the slider is moved
-	// useEffect(() => {
-	//   updateMaxVals()
-	//   selectionStateChanged && selectionStateChanged(false)
-	// }, [COMPSTATE.risky.currentVal, COMPSTATE.mid.currentVal, COMPSTATE.stable.currentVal])
+	// const getResult = (state: SliderData) => {
+	// 	return {
+	// 		riskTolerance: state.riskTolerance.currentVal,
+	// 		assets: { ...mapAssets() },
+	// 	}
+	// }
 
-	// Update chart on maxVal update => updating maxVal auto updates the currentVal
-	// to the correct COMPSTATE matching the new maxVal
-	// useEffect(() => {
-	//   if (COMPSTATE.risky.currentVal + COMPSTATE.mid.currentVal + COMPSTATE.stable.currentVal == 100) {
-	//     generateChart()
-	//     selectionChanged && selectionChanged(getResult())
-	//     selectionStateChanged && selectionStateChanged(true)
-	//   }
-	// }, [COMPSTATE.risky.maxVal, COMPSTATE.stable.maxVal, COMPSTATE.mid.maxVal])
+	// const mapAssets = () => {
+	// 	const assets: any = {}
 
-	const getResult = (state: SliderData) => {
-		return {
-			riskTolerance: state.riskTolerance.currentVal,
-			assets: { ...mapAssets() },
-		}
-	}
+	// 	for (const key of Object.keys(COMPSTATE.assets)) {
+	// 		if (COMPSTATE.assets[key].currentVal != 0) {
+	// 			assets[key] = COMPSTATE.assets[key].currentVal
+	// 		}
+	// 	}
 
-	const mapAssets = () => {
-		const assets: any = {}
-
-		for (const key of Object.keys(COMPSTATE.assets)) {
-			if (COMPSTATE.assets[key].currentVal != 0) {
-				assets[key] = COMPSTATE.assets[key].currentVal
-			}
-		}
-
-		return assets
-	}
+	// 	return assets
+	// }
 
 	// function assetSliderChanged(val: number, key: string) {
 	//   const newState = JSON.parse(JSON.stringify(COMPSTATE))
@@ -184,13 +147,15 @@ const AssetSelector = ({
 	// }
 
 	function riskSliderChanged(val: number, key: string) {
-		const newState = JSON.parse(JSON.stringify(COMPSTATE))
+		console.log('RISK SLIDER CHANGED')
+		const newState = COMPSTATE
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		newState[key as any].currentVal = val
 		// setState({ ...newState })
-		selectionChanged && selectionChanged(getResult(newState))
+		// selectionChanged && selectionChanged(getResult(newState))
+		selectionChanged && selectionChanged({ riskTolerance: COMPSTATE.riskTolerance.currentVal })
 	}
 
 	// useEffect(() => {
@@ -226,8 +191,8 @@ const AssetSelector = ({
 			<div className='mb-5 pr-7'>
 				<p className='mt-2 mb-1'>My risk tolerance</p>
 				<SliderUnstyled
-					disabled={!interactive}
-					componentsProps={compPropsRiskTolerance(interactive)}
+					// disabled={!interactive}
+					componentsProps={compPropsRiskTolerance(true)}
 					aria-label='Small steps'
 					defaultValue={COMPSTATE.riskTolerance.defaultVal}
 					valueLabelFormat={valueText}
@@ -242,11 +207,11 @@ const AssetSelector = ({
 				/>
 				<p className='w-full text-center mt-5 font-bold'>Asset distribution</p>
 				{Object.keys(COMPSTATE.assets).map((key, i) => (
-					<div key={`slider_header_${key}_${i}`}>
+					<div key={`slider_header_${key}_${COMPSTATE.assets[key].currentVal}_${i}`}>
 						<p className='mb-1'>{key}</p>
 						<SliderUnstyled
 							key={`slider_${key}_${i}`}
-							disabled={true}
+							disabled={!interactive}
 							// disabled={!interactive}
 							componentsProps={compProps(interactive)}
 							aria-label='Small steps'
@@ -259,42 +224,9 @@ const AssetSelector = ({
 							max={COMPSTATE.assets[key].maxVal}
 							valueLabelDisplay='on'
 							name={key}
-							// onChangeCommitted={(_, val) => assetSliderChanged(val as number, key)}
+						// onChangeCommitted={(_, val) => assetSliderChanged(val as number, key)}
 						/>
-					</div>
-				))}
-				{/* <p className='mt-2 mb-1'>Mid</p>
-        <SliderUnstyled
-          disabled={!interactive}
-          componentsProps={compProps(interactive)}
-          aria-label='Small steps'
-          defaultValue={COMPSTATE.mid.defaultVal}
-          valueLabelFormat={valueText}
-          getAriaValueText={valueText}
-          step={5}
-          marks
-          min={0}
-          max={COMPSTATE.mid.maxVal}
-          valueLabelDisplay='on'
-          name='mid'
-          onChangeCommitted={(_, val) => assetSliderChanged(val as number, 'mid')}
-        />
-        <p className='mt-2 mb-1'>Risky</p>
-        <SliderUnstyled
-          disabled={!interactive}
-          componentsProps={compProps(interactive)}
-          aria-label='Small steps'
-          defaultValue={COMPSTATE.risky.defaultVal}
-          valueLabelFormat={valueText}
-          getAriaValueText={valueText}
-          step={5}
-          marks
-          min={0}
-          max={COMPSTATE.risky.maxVal}
-          valueLabelDisplay='on'
-          name='risky'
-          onChangeCommitted={(_, val) => assetSliderChanged(val as number, 'risky')}
-        /> */}
+					</div>))}
 			</div>
 		</>
 	)

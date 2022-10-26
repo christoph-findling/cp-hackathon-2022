@@ -25,7 +25,8 @@ export interface Result {
 	assets: {
 		[key: string]: number
 	}
-	riskTolerance: number
+	riskTolerance: number,
+	amount: number
 }
 
 const checkmarkSVG = (fill?: string) => {
@@ -54,7 +55,6 @@ const Advisor: NextPage = () => {
 	})
 	const [activeQuestion, setActiveQuestionState] = useState(activeQuestionInit)
 	const [riskTolerance, setRiskTolerance] = useState(0)
-	const [finishedQuestions, setFinishedQuestionsState] = useState(false)
 
 	const tabChanged = (val: number) => {
 		const newState = [...JSON.parse(JSON.stringify(stepsState))]
@@ -85,7 +85,7 @@ const Advisor: NextPage = () => {
 
 	useEffect(() => {
 		console.log('risktolerance ,', riskTolerance)
-		dispatch(setResultState({ risky: 30, mid: 30, stable: 40, riskTolerance }))
+		dispatch(setResultState({ assets: {}, riskTolerance }))
 	}, [riskTolerance])
 
 	const showContinueButton = () => {
@@ -117,7 +117,6 @@ const Advisor: NextPage = () => {
 	const resetState = () => {
 		setQuestionsState(JSON.parse(JSON.stringify(initialQuestionsState)) as Question[])
 		setActiveQuestionState(0)
-		setFinishedQuestionsState(false)
 	}
 
 	const goToNextQuestion = (newState?: Question[]) => {
@@ -178,7 +177,6 @@ const Advisor: NextPage = () => {
 
 	return (
 		<Layout>
-			{!finishedQuestions && (
 				<div>
 					<div className='mb-8'>
 						<div className='flex justify-between'>
@@ -223,13 +221,7 @@ const Advisor: NextPage = () => {
 							<CustomButton title='Reset' disabled={!activateResetButton()} />
 						</a>
 						{showContinueButton() && (
-							<a
-								onClick={() => {
-									setFinishedQuestionsState(true)
-								}}
-							>
 								<CustomLink href='/baskets' title='Continue' type='button' />
-							</a>
 						)}
 						{!showContinueButton() && (
 							<a
@@ -246,7 +238,6 @@ const Advisor: NextPage = () => {
 						)}
 					</div>
 				</div>
-			)}
 		</Layout>
 	)
 }

@@ -1,9 +1,10 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+import CustomLink from './link'
 
 const Header = () => {
 	return (
-		<div className='flex w-full justify-between'>
-			<span className='text-lg'>testudo v0.1</span>
+		<div className='mt-2 flex w-full justify-between items-center'>
+			<CustomLink className="text-lg cursor-pointer" href="/" title="testudo v0.1"/>
 			<ConnectButton />
 		</div>
 	)

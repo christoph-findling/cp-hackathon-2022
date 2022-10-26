@@ -2,19 +2,10 @@ import { NextPage } from 'next'
 import Layout from '../components/layout'
 import AssetSelector from '../components/slider'
 import CustomLink from '../components/link'
-import { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { selectResultState, setResultState } from '../store/resultSlice'
-import { Result } from './advisor'
+import { useState } from 'react'
 
 const Manual: NextPage = () => {
-	const resultState = useSelector(selectResultState)
 	const [selectionValid, setSelectionState] = useState(false)
-	const dispatch = useDispatch()
-
-	const selectionChanged = (result: Result) => {
-		dispatch(setResultState(result))
-	}
 
 	return (
 		<Layout>
@@ -22,10 +13,7 @@ const Manual: NextPage = () => {
 				<div className='w-3/5'>
 					<div className='p-5 mb-5 border rounded-lg shadow-lg shadow-slate-100'>
 						<AssetSelector
-							input={resultState}
 							interactive={true}
-							selectionChanged={selectionChanged}
-							selectionStateChanged={setSelectionState}
 						/>
 					</div>
 					<div className='w-full flex justify-between items-center'>

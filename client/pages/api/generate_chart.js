@@ -37,14 +37,11 @@ function generateChart(data) {
 	// The radius of the pieplot is half the width or half the height (smallest one). I subtract a bit of margin.
 	var radius = Math.min(width, height) / 2 - margin
 
-	// Create dummy data
-	// var data = { a: 9, b: 20, c: 30, d: 8, e: 12 }
-
 	// set the color scale
 	var color = d3
 		.scaleOrdinal()
 		.domain(data)
-		.range(['#98abc5', '#8a89a6', '#7b6888', '#6b486b', '#a05d56'])
+		.range(['#98abc5', '#8a89a6', '#7b6888', '#6b486b', '#A05674', '#B34C52', '#C3603C'].reverse())
 
 	// Compute the position of each group on the pie:
 	var pie = d3.pie().value(function (d) {

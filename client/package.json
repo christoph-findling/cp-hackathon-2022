@@ -13,6 +13,7 @@
     "@mui/base": "^5.0.0-alpha.101",
     "@rainbow-me/rainbowkit": "^0.7.3",
     "@reduxjs/toolkit": "^1.8.6",
+    "canvas-confetti": "^1.6.0",
     "d3-node": "^3.0.0",
     "dotenv": "^16.0.3",
     "ethers": "^5.7.2",
