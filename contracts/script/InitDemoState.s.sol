@@ -31,23 +31,28 @@ contract InitDemoState is Script {
         BasketBlueprintRegistry basketBlueprintRegistry = new BasketBlueprintRegistry();
 
         console.log(
-            "\n\n  BasketBlueprintRegistry deployed at: ",
+            "\n\n  basketBlueprintRegistry: ",
             address(basketBlueprintRegistry)
         );
 
-        BasketManager basketManager = new BasketManager();
+        IBasketManager basketManager = new BasketManager(
+            basketBlueprintRegistry,
+            IProtonB(0x1CeFb0E1EC36c7971bed1D64291fc16a145F35DC), // proton B on Polygon
+            IChargedParticles(0x0288280Df6221E7e9f23c1BB398c820ae0Aa6c10) // chargedParticles on Polygon
+        );
 
-        console.log("BasketManager deployed at: ", address(basketManager));
+        console.log("basketManager: ", address(basketManager));
 
         IBasketBuilder basketBuilder = new BasketBuilder(
             basketBlueprintRegistry,
             basketManager,
             IProtonB(0x1CeFb0E1EC36c7971bed1D64291fc16a145F35DC), // proton B on Polygon
-            IChargedParticles(0x660De54CEA09838d11Df0812E2754eD8D08CD2f7), // chargedParticles on Polygon
+            IChargedParticles(0x0288280Df6221E7e9f23c1BB398c820ae0Aa6c10), // chargedParticles on Polygon
             0xDef1C0ded9bec7F1a1670819833240f027b25EfF // 0x SwapTarget -> "ExchangeProxy" on Polygon
         );
+        basketManager.setBasketBuilder(address(basketBuilder), true);
 
-        console.log("BasketBuilder deployed at: ", address(basketBuilder));
+        console.log("basketBuilder: ", address(basketBuilder));
 
         bytes32 defaultbasketBlueprintName = "DiversifiedBasket";
         address defaultOwner = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
@@ -65,13 +70,6 @@ contract InitDemoState is Script {
             "Default basket blueprint defined. \n\n------------------------------------\n\n"
         );
         vm.stopBroadcast();
-
-        // give the default account at [0] some usdc for swapping
-        address usdcWhale = 0x06959153B974D0D5fDfd87D561db6d8d4FA0bb0B;
-        vm.prank(usdcWhale);
-
-        // transfer 1MM USDC to owner
-        IERC20(usdc).transfer(defaultOwner, 6_000_000 * 1e6);
     }
 
     function _getDefaultAssets()

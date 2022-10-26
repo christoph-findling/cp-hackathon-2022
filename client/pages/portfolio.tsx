@@ -12,6 +12,7 @@ import { Signer } from 'ethers'
 import { Result } from './advisor'
 import { useEffect, useRef, useState } from 'react'
 import { ModalUnstyled } from '@mui/base'
+import { contractAddresses } from './contract-addresses'
 
 import { ConfettiService } from '../services/confetti-service';
 
@@ -33,31 +34,29 @@ const Portfolio: NextPage = () => {
 			return;
 		}
 		setInitState(true);
-		const basket = new BasketDemoSdk()
-		basket.init(signer as Signer)
+		const basketSdk = new BasketDemoSdk()
+		basketSdk.init(signer as Signer)
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		const userRiskRate = resultState.riskTolerance
-		const inputAmount = resultState.amount
-
-		const [assets, amounts] = await basket.getSpendAmounts(
-			'0x9853Eb1dc3946F78f043EA513Ed87ADBdA6eeE09',
+		const inputAmount = 10000
+		const [assets, amounts] = await basketSdk.getSpendAmounts(
+			contractAddresses.basketBuilder,
 			resultState.riskTolerance * 1e6,
 			inputAmount * 1e6,
 		)
-
-		// default basket verteilung
+		// default basket assets
 		// token 1: gold PAXG, 1%, default weight
-		// token 2: usdc, 5%, default weight
-		// token 3: wbtc, 10%, double weight
-		// token 4: weth, 20%, triple weight
+		// token 2: aUSDC, 5%, default weight -> 6 decimals
+		// token 3: aWBTC, 10%, double weight -> 8 decimals
+		// token 4: aWETH, 20%, triple weight
 		// token 5: dpi, 40%, default weight
 		// token 6: mvi, 65%, default weight
 		// token 7: ionx, 80%, double weight
 
 		console.log(
 			`for user risk rate of ${userRiskRate}%`,
-			amounts.map((x) => x.toNumber() / 1e6),
+			amounts.map((x: any) => x.toNumber() / 1e6),
 		)
 
 		const assetsObject: any = {}
@@ -66,19 +65,33 @@ const Portfolio: NextPage = () => {
 			assetsObject[asset] = parseInt(percentage.toFixed(2))
 			return { [asset]: percentage }
 		})
-		const totalPercentage = amounts.reduce((prev, x) => (prev += x.toNumber() / 1e6), 0)
+		// const totalPercentage = amounts.reduce((prev, x) => (prev += x.toNumber() / 1e6), 0)
 
 		const result: Result = {
 			...resultState,
 			riskTolerance: userRiskRate,
 			assets: assetsObject,
 		}
-		console.log(result)
+
 		dispatch(setResultState(result))
 	}
 
 	if (signer && !initState) {
 		getAssetDistribution();
+	}
+
+	const createBasket = async () => {
+		const basketSdk = new BasketDemoSdk()
+		basketSdk.init(signer as Signer)
+		const inputAmount = 1000
+		const result = await basketSdk.swapAndBuild(
+			'sample',
+			contractAddresses.basketBuilder,
+			basketSdk.usdc,
+			inputAmount * 1e6,
+			resultState.riskTolerance * 1e6,
+		)
+		console.log('swapAndBuild result', result)
 	}
 
 	const selectionChanged = (result: Result) => {
@@ -132,7 +145,7 @@ const Portfolio: NextPage = () => {
 					</div>
 					<div className='w-full flex justify-between items-center'>
 						<CustomLink href='/advisor' title='Back to advisor' type='button' />
-						<a onClick={() => setModalOpenState(true)}>
+						<a onClick={() => createBasket()}>
 							<CustomButton title='Confirm & Create portfolio' />
 						</a>
 					</div>

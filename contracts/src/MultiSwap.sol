@@ -4,6 +4,10 @@ pragma solidity >=0.8.17;
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "forge-std/console.sol";
+
+error MultiSwap__InvalidParams();
+
 contract MultiSwap {
     using SafeERC20 for IERC20;
 
@@ -20,11 +24,18 @@ contract MultiSwap {
         uint256 maxAmountInputToken,
         IERC20[] memory toAssets,
         bytes[] calldata swapQuotes
-    ) public returns (uint256[] memory obtainedAmounts) {
+    )
+        public
+        returns (
+            uint256[] memory obtainedAmounts,
+            uint256[] memory spentAmounts
+        )
+    {
         // for now per default via 0x, later there could be
         // adapters, e.g. 0xAdapter etc. which can be defined per token?
 
         obtainedAmounts = new uint256[](swapQuotes.length);
+        spentAmounts = new uint256[](swapQuotes.length);
 
         inputToken.safeTransferFrom(
             msg.sender,
@@ -33,11 +44,34 @@ contract MultiSwap {
         );
         _safeApprove(inputToken, zeroXSwapTarget, maxAmountInputToken);
 
+        uint256 fillObtainedAmountsIndex;
         for (uint256 i = 0; i < swapQuotes.length; ++i) {
-            uint256 balanceBefore = toAssets[i].balanceOf(address(this));
-            _fillQuote(swapQuotes[i]);
-            uint256 balanceAfter = toAssets[i].balanceOf(address(this));
-            obtainedAmounts[i] = balanceAfter - balanceBefore;
+            if (address(inputToken) == address(toAssets[i])) {
+                obtainedAmounts[i] = 0; // will be set later from leftover
+                if (fillObtainedAmountsIndex != 0) {
+                    revert MultiSwap__InvalidParams();
+                }
+                fillObtainedAmountsIndex = i;
+            } else {
+                uint256 balanceBefore = toAssets[i].balanceOf(address(this));
+                uint256 inputTokenBalanceBefore = inputToken.balanceOf(
+                    address(this)
+                );
+                _fillQuote(swapQuotes[i]);
+                uint256 balanceAfter = toAssets[i].balanceOf(address(this));
+                uint256 inputTokenBalanceAfter = inputToken.balanceOf(
+                    address(this)
+                );
+                obtainedAmounts[i] = (balanceAfter - balanceBefore);
+                spentAmounts[i] = (inputTokenBalanceBefore -
+                    inputTokenBalanceAfter);
+            }
+        }
+
+        if (fillObtainedAmountsIndex != 0) {
+            uint256 inputTokenBalance = inputToken.balanceOf(address(this));
+            obtainedAmounts[fillObtainedAmountsIndex] = inputTokenBalance;
+            spentAmounts[fillObtainedAmountsIndex] = inputTokenBalance;
         }
     }
 
@@ -54,6 +88,7 @@ contract MultiSwap {
         // Taken from: https://ethereum.stackexchange.com/a/111187/73805
         if (!success) {
             if (returndata.length == 0) revert();
+
             assembly {
                 revert(add(32, returndata), mload(returndata))
             }

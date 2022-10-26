@@ -3,6 +3,7 @@ pragma solidity >=0.8.17;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IProtonB} from "./external/charged-particles/IProtonB.sol";
@@ -20,7 +21,7 @@ error BasketBuilder__InvalidParams();
 
 import "forge-std/console.sol";
 
-contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
+contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder, ERC721Holder {
     using SafeERC20 for IERC20;
 
     // default hardcoded values for now for formula "modifiers"
@@ -59,20 +60,25 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
         IBasketBlueprintRegistry.BasketAsset[]
             memory basketAssets = _validBasketBlueprint(basketBlueprintName);
 
+        console.log("swapAndBuild 2");
         IERC20[] memory toAssets = new IERC20[](basketAssets.length);
         for (uint256 i = 0; i < basketAssets.length; ++i) {
             toAssets[i] = basketAssets[i].asset;
         }
-
-        uint256[] memory assetAmounts = multiSwap(
+        console.log("swapAndBuild 3");
+        uint256[] memory assetAmounts;
+        uint256[] memory spentAmounts;
+        (assetAmounts, spentAmounts) = multiSwap(
             inputToken,
             maxAmountInputToken,
             toAssets,
             swapQuotes
         );
+        console.log("swapAndBuild 4");
 
-        _validBuildValues(basketAssets, riskRate, assetAmounts);
+        _validBuildValues(basketAssets, riskRate, spentAmounts);
 
+        console.log("swapAndBuild 5");
         tokenId = _buildBasket(
             basketAssets,
             assetAmounts,
@@ -81,6 +87,7 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
             unlockBlock
         );
 
+        console.log("swapAndBuild 6");
         // store particle token Id -> basketBlueprintName, user riskRate in BasketManager
         basketManager.createBasketMeta(tokenId, basketBlueprintName, riskRate);
     }
@@ -100,7 +107,10 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
         IBasketBlueprintRegistry.BasketAsset[]
             memory basketAssets = _validBasketBlueprint(basketBlueprintName);
 
-        _validBuildValues(basketAssets, riskRate, assetAmounts);
+        // Todo: has to be adjusted to decimals
+        // Validation with assetAmounts instead of spend amounts not functional right now,
+        // assetAmounts would have to be brought to same decimals
+        // _validBuildValues(basketAssets, riskRate, assetAmounts);
 
         // transferFrom each basketAsset in; according to assetAmounts (assumes ERC20 approve has been executed)
         for (uint256 i = 0; i < basketAssets.length; ++i) {
@@ -207,9 +217,11 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
         string memory tokenMetaUri,
         uint256 unlockBlock
     ) internal returns (uint256 tokenId) {
+        console.log("_buildBasket 1");
         // 1. create charged particle NFT with first asset wrapped
         basketAssets[0].asset.safeApprove(address(protonB), assetAmounts[0]);
 
+        console.log("_buildBasket 2");
         tokenId = protonB.createChargedParticle(
             owner(), // creator
             address(this), // receiver -> this is initially this contract to have permissions for timelocking.
@@ -222,15 +234,17 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
             assetAmounts[0], // assetAmount
             0 // annuityPercent
         );
+        console.log("_buildBasket 3 tokenId ", tokenId);
 
         // 2. ChargedParticles.energizeParticle forEach asset (except first, which is already in)
         for (uint256 i = 1; i < basketAssets.length; ++i) {
+            console.log("_buildBasket 4_1 (i):", i);
             basketAssets[i].asset.safeApprove(
                 address(chargedParticles),
                 assetAmounts[i]
             );
 
-            chargedParticles.energizeParticle(
+            uint256 chargedAmount = chargedParticles.energizeParticle(
                 address(protonB), // contractAddress -> The address to the contract of the NFT token (Particle)
                 tokenId, // tokenId
                 _mapAssetTypeToWalletManagerId(basketAssets[i].assetType), // walletManagerId -> same as above
@@ -238,6 +252,7 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
                 assetAmounts[i], // assetAmount
                 address(0) // referrer
             );
+            console.log("_buildBasket 4_3 chargedAmount!", chargedAmount);
         }
 
         /**
@@ -263,9 +278,11 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
          * Permanent would be preferrable.
          */
 
+        console.log("_buildBasket 5");
         IChargedState chargedState = IChargedState(
             chargedParticles.getStateAddress()
         );
+        console.log("unlockBlock", unlockBlock);
         if (unlockBlock != 0) {
             chargedState.setReleaseTimelock( // principle amount
                 address(protonB), // contractAddress
@@ -279,9 +296,12 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
             );
         }
 
+        console.log("_buildBasket 6");
+
         // transfer NFT to receiver
         protonB.approve(receiver, tokenId);
         protonB.safeTransferFrom(address(this), receiver, tokenId);
+        console.log("_buildBasket DONE");
     }
 
     function _validBuildValues(
@@ -305,11 +325,14 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder {
         // and ensure ratios of input param asset amounts are matching with the given user riskRate
         for (uint256 i = 0; i < basketAssets.length - 1; ++i) {
             // compare ratio of asset to next asset
+
+            // assetAmounts have to be brought to same decimals
             uint256 isRatio = (assetAmounts[i] * 1e18) / assetAmounts[i + 1];
             uint256 shouldBeRatio = (shouldBeAmounts[i] * 1e18) /
                 shouldBeAmounts[i + 1];
 
-            if (_absDifference(isRatio, shouldBeRatio) > 1e6) {
+            // Todo: has to be adjusted to decimals
+            if (_absDifference(isRatio, shouldBeRatio) > 1e15) {
                 // allow for some tolerance of 1e6 in divergence
                 revert BasketBuilder__InvalidParams();
             }

@@ -21,7 +21,11 @@ contract DeployBasketBuilder is Script {
             address(basketBlueprintRegistry)
         );
 
-        BasketManager basketManager = new BasketManager();
+        BasketManager basketManager = new BasketManager(
+            basketBlueprintRegistry,
+            IProtonB(0x1CeFb0E1EC36c7971bed1D64291fc16a145F35DC), // proton B on Polygon
+            IChargedParticles(0x0288280Df6221E7e9f23c1BB398c820ae0Aa6c10) // chargedParticles on Polygon
+        );
 
         console.log("BasketManager deployed at: ", address(basketManager));
 
@@ -29,7 +33,7 @@ contract DeployBasketBuilder is Script {
             basketBlueprintRegistry,
             basketManager,
             IProtonB(0x1CeFb0E1EC36c7971bed1D64291fc16a145F35DC), // proton B on Polygon
-            IChargedParticles(0x660De54CEA09838d11Df0812E2754eD8D08CD2f7), // chargedParticles on Polygon
+            IChargedParticles(0x0288280Df6221E7e9f23c1BB398c820ae0Aa6c10), // chargedParticles on Polygon
             0xDef1C0ded9bec7F1a1670819833240f027b25EfF // 0x SwapTarget -> "ExchangeProxy" on Polygon
         );
 

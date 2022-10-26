@@ -12,4 +12,10 @@ interface IBasketManager {
         bytes32 basketBlueprintName,
         uint32 riskRate
     ) external;
+
+    function setBasketBuilder(address basketBuilder, bool allowed) external;
+
+    function getBasketAssetAmounts(uint256 tokenId)
+        external
+        returns (address[] memory assets, uint256[] memory amounts);
 }
