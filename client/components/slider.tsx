@@ -88,7 +88,7 @@ const AssetSelector = ({
 	const [COMPSTATE, setState] = useState(JSON.parse(JSON.stringify(getMappedData())))
 
 	useEffect(() => {
-		generateChart();
+		generateChart()
 	}, [COMPSTATE.riskTolerance])
 
 	const [chartState, setChartState] = useState({ chart: loadingSvg })
@@ -114,6 +114,7 @@ const AssetSelector = ({
 				.then((data) => {
 					console.log(data)
 					setChartState({ chart: data.res })
+					selectionChanged && selectionChanged({ svg: data.res })
 				})
 		}, 500)
 	}
@@ -224,9 +225,10 @@ const AssetSelector = ({
 							max={COMPSTATE.assets[key].maxVal}
 							valueLabelDisplay='on'
 							name={key}
-						// onChangeCommitted={(_, val) => assetSliderChanged(val as number, key)}
+							// onChangeCommitted={(_, val) => assetSliderChanged(val as number, key)}
 						/>
-					</div>))}
+					</div>
+				))}
 			</div>
 		</>
 	)

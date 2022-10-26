@@ -9,15 +9,16 @@ import { useDispatch } from 'react-redux'
 import { useState } from 'react'
 import { setAdvisorState } from '../store/advisorSlice'
 import { initialQuestionsState } from '../store/questions'
+import { setResultState } from '../store/resultSlice'
 
 const Home: NextPage = () => {
-	const dispatch = useDispatch();
-	const [initState, setInitState] = useState(false);
+	const dispatch = useDispatch()
+	const [initState, setInitState] = useState(false)
 
 	if (!initState) {
-		// dispatch(setResultState({ assets: {}, riskTolerance: 0 }));
-		dispatch(setAdvisorState(initialQuestionsState));
-		setInitState(true);
+		dispatch(setResultState({ assets: {}, riskTolerance: 0, svg: '', metadataUri: '' }))
+		dispatch(setAdvisorState(initialQuestionsState))
+		setInitState(true)
 	}
 
 	return (

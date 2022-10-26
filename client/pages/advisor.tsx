@@ -25,8 +25,11 @@ export interface Result {
 	assets: {
 		[key: string]: number
 	}
-	riskTolerance: number,
+	riskTolerance: number
 	amount: number
+	svg: string
+	metadataUri: string
+	token: string
 }
 
 const checkmarkSVG = (fill?: string) => {
@@ -177,67 +180,65 @@ const Advisor: NextPage = () => {
 
 	return (
 		<Layout>
-				<div>
-					<div className='mb-8'>
-						<div className='flex justify-between'>
-							{stepsState.map((step: Question, index: number) => (
-								<div
-									key={`${step.title}_${index}_div`}
-									className={`${index != 0 ? 'w-full' : 'w-auto'} flex flex-row`}
-								>
-									{index != 0 && (
-										<div key={`${step.title}_${index}_hr`} className='w-full'>
-											<hr className='m-5 ' />
-										</div>
-									)}
-									<button
-										className='flex flex-col justify-center items-center text-sm leading-tight'
-										key={`${step.title}_${index}`}
-										onClick={() => tabChanged(index)}
-									>
-										<div
-											className={`text-blue mb-2 w-10 h-10 rounded-full flex items-center justify-center ${
-												step.active ? 'bg-blue-800 text-white' : 'bg-white border border-slate-300'
-											}`}
-										>
-											{step?.selected != null
-												? checkmarkSVG(step.active ? 'fill-blue-800' : '')
-												: index + 1}
-										</div>
-										{step.title}
-									</button>
-								</div>
-							))}
-						</div>
-						{getQuestion()}
-					</div>
-					<div className='w-full flex justify-center relative'>
-						<a
-							className='absolute left-0'
-							onClick={() => {
-								activateResetButton() ? resetState() : ''
-							}}
-						>
-							<CustomButton title='Reset' disabled={!activateResetButton()} />
-						</a>
-						{showContinueButton() && (
-								<CustomLink href='/baskets' title='Continue' type='button' />
-						)}
-						{!showContinueButton() && (
-							<a
-								className='ml-2'
-								onClick={() => (activatePreviousButton() ? goToPreviousQuestion() : '')}
+			<div>
+				<div className='mb-8'>
+					<div className='flex justify-between'>
+						{stepsState.map((step: Question, index: number) => (
+							<div
+								key={`${step.title}_${index}_div`}
+								className={`${index != 0 ? 'w-full' : 'w-auto'} flex flex-row`}
 							>
-								<CustomButton title='Previous' disabled={!activatePreviousButton()} />
-							</a>
-						)}
-						{!showContinueButton() && (
-							<a className='ml-2' onClick={() => (activateNextButton() ? goToNextQuestion() : '')}>
-								<CustomButton title='Next' disabled={!activateNextButton()} />
-							</a>
-						)}
+								{index != 0 && (
+									<div key={`${step.title}_${index}_hr`} className='w-full'>
+										<hr className='m-5 ' />
+									</div>
+								)}
+								<button
+									className='flex flex-col justify-center items-center text-sm leading-tight'
+									key={`${step.title}_${index}`}
+									onClick={() => tabChanged(index)}
+								>
+									<div
+										className={`text-blue mb-2 w-10 h-10 rounded-full flex items-center justify-center ${
+											step.active ? 'bg-blue-800 text-white' : 'bg-white border border-slate-300'
+										}`}
+									>
+										{step?.selected != null
+											? checkmarkSVG(step.active ? 'fill-blue-800' : '')
+											: index + 1}
+									</div>
+									{step.title}
+								</button>
+							</div>
+						))}
 					</div>
+					{getQuestion()}
 				</div>
+				<div className='w-full flex justify-center relative'>
+					<a
+						className='absolute left-0'
+						onClick={() => {
+							activateResetButton() ? resetState() : ''
+						}}
+					>
+						<CustomButton title='Reset' disabled={!activateResetButton()} />
+					</a>
+					{showContinueButton() && <CustomLink href='/baskets' title='Continue' type='button' />}
+					{!showContinueButton() && (
+						<a
+							className='ml-2'
+							onClick={() => (activatePreviousButton() ? goToPreviousQuestion() : '')}
+						>
+							<CustomButton title='Previous' disabled={!activatePreviousButton()} />
+						</a>
+					)}
+					{!showContinueButton() && (
+						<a className='ml-2' onClick={() => (activateNextButton() ? goToNextQuestion() : '')}>
+							<CustomButton title='Next' disabled={!activateNextButton()} />
+						</a>
+					)}
+				</div>
+			</div>
 		</Layout>
 	)
 }

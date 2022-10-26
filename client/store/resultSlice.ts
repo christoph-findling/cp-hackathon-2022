@@ -11,7 +11,10 @@ const initialState: ResultState =  {
     resultState: {
       assets: {},
       riskTolerance: 0,
-      amount: 0
+      amount: 0,
+      svg: '',
+      metadataUri: '',
+      token: ''
     }
 }
 

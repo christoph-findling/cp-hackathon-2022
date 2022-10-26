@@ -12,11 +12,11 @@ import { NFT_STORAGE_API_KEY } from './nft-storage-api-key'
 const zeroXApiHTTP = 'https://polygon.api.0x.org'
 
 export class BasketDemoSdk {
-	public readonly defaultBasketBlueprintName = utils.formatBytes32String('DiversifiedBasket')
+  public readonly defaultBasketBlueprintName = utils.formatBytes32String('DiversifiedBasket')
 	public readonly usdc = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
-
+  
 	public signer: Signer | null = null
-
+  
 	public init(signer: Signer) {
 		this.signer = signer
 	}
