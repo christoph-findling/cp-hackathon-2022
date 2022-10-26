@@ -6,20 +6,18 @@ import Image from 'next/image'
 import workerGif from '../public/icons/icons8-work.gif'
 import robotGif from '../public/icons/icons8-robot.gif'
 import { useDispatch } from 'react-redux'
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { setAdvisorState } from '../store/advisorSlice'
 import { initialQuestionsState } from '../store/questions'
 import { setResultState } from '../store/resultSlice'
 
 const Home: NextPage = () => {
 	const dispatch = useDispatch()
-	const [initState, setInitState] = useState(false)
 
-	if (!initState) {
-		dispatch(setResultState({ assets: {}, riskTolerance: 0, svg: '', metadataUri: '' }))
+	useEffect(() => {
+		dispatch(setResultState({ assets: {}, amount: 100, riskTolerance: 0, svg: '', metadataUri: '' }))
 		dispatch(setAdvisorState(initialQuestionsState))
-		setInitState(true)
-	}
+	}, [])
 
 	return (
 		<Layout>
