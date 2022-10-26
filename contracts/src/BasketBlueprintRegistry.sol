@@ -9,6 +9,8 @@ error BasketBlueprintRegistry__Unauthorized();
 error BasketBlueprintRegistry__InvalidParams();
 error BasketBlueprintRegistry__RiskRateMismatch();
 
+import "forge-std/console.sol";
+
 contract BasketBlueprintRegistry is
     AssetRiskRateRegistry,
     IBasketBlueprintRegistry
@@ -116,7 +118,7 @@ contract BasketBlueprintRegistry is
             // and asset weight is max uint32, multiplied fits easily into uint256
             unchecked {
                 weightedRiskRatesSum +=
-                    (assets[i].riskRate * assets[i].weight) /
+                    (uint256(assets[i].riskRate) * uint256(assets[i].weight)) /
                     1e6; // weight has decimals 1e6
                 weightsSum += assets[i].weight;
             }

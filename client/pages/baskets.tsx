@@ -59,18 +59,21 @@ const checkmarkSVG = () => {
 
 const Baskets: NextPage = () => {
 	const [defaultBasketRiskRate, setDefaultBasketRiskRate] = useState(50)
-	const { data: signer, isError, isLoading } = useSigner()
-	// let defaultBasketRiskRate = 50
 
 	const init = async () => {
+		const { data: signer, isError, isLoading } = useSigner()
 		const basketSdk = new BasketDemoSdk()
 		basketSdk.init(signer as Signer)
 		const registry = await basketSdk.getBasketBlueprintRegistryAt(
 			contractAddresses.basketBlueprintRegistry,
 		)
-		setDefaultBasketRiskRate(
-			(await registry.basketBlueprintRiskRate(basketSdk.defaultBasketBlueprintName)).toNumber(),
+		if (!registry || !signer) {
+			return
+		}
+		const basketRiskRate = await registry.basketBlueprintRiskRate(
+			basketSdk.defaultBasketBlueprintName,
 		)
+		setDefaultBasketRiskRate(basketRiskRate.div(1e6).toNumber())
 	}
 
 	init()

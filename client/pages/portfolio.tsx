@@ -39,8 +39,8 @@ const Portfolio: NextPage = () => {
 		)
 		// default basket assets
 		// token 1: gold PAXG, 1%, default weight
-		// token 2: aUSDC, 5%, default weight
-		// token 3: aWBTC, 10%, double weight
+		// token 2: aUSDC, 5%, default weight -> 6 decimals
+		// token 3: aWBTC, 10%, double weight -> 8 decimals
 		// token 4: aWETH, 20%, triple weight
 		// token 5: dpi, 40%, default weight
 		// token 6: mvi, 65%, default weight
@@ -66,6 +66,22 @@ const Portfolio: NextPage = () => {
 
 		dispatch(setResultState(result))
 		console.log(result)
+		setLoadingState(false)
+	}
+
+	const createBasket = async () => {
+		setLoadingState(true)
+		const basketSdk = new BasketDemoSdk()
+		basketSdk.init(signer as Signer)
+		const inputAmount = 1000
+		const result = await basketSdk.swapAndBuild(
+			'sample',
+			contractAddresses.basketBuilder,
+			basketSdk.usdc,
+			inputAmount * 1e6,
+			resultState.riskTolerance * 1e6,
+		)
+		console.log('swapAndBuild result', result)
 		setLoadingState(false)
 	}
 
@@ -113,6 +129,9 @@ const Portfolio: NextPage = () => {
 						<CustomLink href='/advisor' title='Back to advisor' type='button' />
 						<a onClick={() => doThing()}>
 							<CustomButton title='Init' />
+						</a>
+						<a onClick={() => createBasket()}>
+							<CustomButton title='CreateBasket' />
 						</a>
 					</div>
 				</div>
