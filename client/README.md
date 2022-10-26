@@ -1,3 +1,10 @@
+# Run the client
+
+- `npm i`
+- set up the `nft-storage-api-key.ts` in /tslib (key from https://nft.storage)
+- `npm run dev`
+- client will be running in http://localhost:3000
+
 # Next.js + Tailwind CSS Example + Material UI (Base Components)
 
 This example shows how to use [Tailwind CSS](https://tailwindcss.com/) [(v3.0)](https://tailwindcss.com/blog/tailwindcss-v3) with Next.js. It follows the steps outlined in the official [Tailwind docs](https://tailwindcss.com/docs/guides/nextjs).

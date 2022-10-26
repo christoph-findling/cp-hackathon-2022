@@ -9,7 +9,7 @@ import usdcIcon from '../public/icons/usdc.webp'
 import { setResultState } from '../store/resultSlice'
 
 const Amount: NextPage = () => {
-	const [amount, setAmount] = useState(100)
+	const [amount, setAmount] = useState(1000)
 	const dispatch = useDispatch()
 
 	return (

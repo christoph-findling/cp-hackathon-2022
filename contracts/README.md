@@ -4,12 +4,19 @@ Setup:
 
 -   clone
 -   run `make`
--   create .env file and set ALCHEMY_KEY for polygon
+-   create .env file and set the ALCHEMY_KEY for polygon
 
 Run:
 
 -   run `make node` in one terminal (this will run a local node with anvil)
--   run `make run` in another terminal (this will deploy all contracts and create an initial state with a defined Basket "DEFAULT")
+-   run `make run` in another terminal (this will deploy all contracts and create an initial state with a defined Basket)
+
+Interact:
+
+-   Add the first account of Anvil to metamask (import)
+    You can find the private key in the first terminal window where you ran `make node`
+-   Set the contract addresses in the client `./pages/contract-addresses.ts`
+    you can find those addresses in the second terminal window where you ran `make run`
 
 ---
 
@@ -168,8 +175,8 @@ Contributions are always welcome! Open a PR or an issue!
 
 [ ] Add bash scripts to interact with contracts using `cast`
 
-[ ] Make deploying contracts to `anvil` simpler
-=======
+# [ ] Make deploying contracts to `anvil` simpler
+
 Run Dev environment:
 
 Setup:
