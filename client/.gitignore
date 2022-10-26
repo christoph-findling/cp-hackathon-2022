@@ -37,3 +37,4 @@ next-env.d.ts
 
 contract-types
 .env
+nft-storage-api-key.ts

@@ -76,7 +76,7 @@ const AssetSelector = ({
 			},
 			assets: {},
 		}
-		for (const key of Object.keys(input.assets)) {
+		for (const key of Object.keys(input?.assets)) {
 			data.assets[key] = {
 				currentVal: input.assets[key],
 				defaultVal: input.assets[key],
@@ -94,7 +94,7 @@ const AssetSelector = ({
 		},
 		assets: {},
 	}
-	for (const key of Object.keys(input.assets)) {
+	for (const key of Object.keys(input?.assets)) {
 		initialState.assets[key] = {
 			currentVal: input.assets[key],
 			defaultVal: input.assets[key],

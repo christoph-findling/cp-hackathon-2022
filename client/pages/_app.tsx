@@ -6,10 +6,8 @@ import { useStore } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
 import { wrapper } from '../store/store'
 
-import { alchemyProvider } from 'wagmi/providers/alchemy'
-import { publicProvider } from 'wagmi/providers/public'
 import { getDefaultWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit'
-import { configureChains, chain, createClient, WagmiConfig, Chain } from 'wagmi'
+import { configureChains, createClient, WagmiConfig, Chain } from 'wagmi'
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 
 function MyApp({ Component, pageProps }: AppProps) {
