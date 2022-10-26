@@ -1,5 +1,5 @@
 import { erc20ABI, useProvider } from 'wagmi'
-import { BigNumber, ethers, Signer, utils } from 'ethers'
+import { BigNumber, ContractReceipt, ethers, Signer, utils } from 'ethers'
 import { stringify } from 'query-string'
 import { NFTStorage } from 'nft.storage'
 import axios from 'axios'
@@ -12,11 +12,11 @@ import { NFT_STORAGE_API_KEY } from './nft-storage-api-key'
 const zeroXApiHTTP = 'https://polygon.api.0x.org'
 
 export class BasketDemoSdk {
-  public readonly defaultBasketBlueprintName = utils.formatBytes32String('DiversifiedBasket')
+	public readonly defaultBasketBlueprintName = utils.formatBytes32String('DiversifiedBasket')
 	public readonly usdc = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
-  
+
 	public signer: Signer | null = null
-  
+
 	public init(signer: Signer) {
 		this.signer = signer
 	}
@@ -56,6 +56,53 @@ export class BasketDemoSdk {
 			userRiskRate,
 			inputAmount,
 		)
+	}
+
+	public async swapAndApprove(
+		nftImageSvgString: string,
+		basketBuilderAddress: string,
+		inputToken: string,
+		// total amount that the user wants to spend (e.g. 1000 USDC)
+		// remember decimals here, e.g. usdc has 6 decimals so 1 USDC = 1_000_000
+		maxAmountInputToken: number,
+		// userRiskRate should be between 1 and 100_000_000.
+		// 1% would be 1_000_000. 10% 10_000_000 etc.
+		userRiskRate: number,
+		// optional unlock date
+		unlockDate?: Date,
+		// optional different receiver than BasketDemoSdk.getOwner().address
+		receiver?: string,
+	) {
+		const ownerAddress = await (await this.getOwner()).getAddress()
+		if (!receiver) {
+			receiver = ownerAddress
+		}
+		const usdcERC20 = new ethers.Contract(this.usdc, erc20ABI, await this.getOwner())
+
+		const ownerInputTokenBalance = await usdcERC20.balanceOf(ownerAddress)
+		console.log('balance of owner of inputToken:', ownerInputTokenBalance.toString())
+		// check balance
+		if (ownerInputTokenBalance < maxAmountInputToken) {
+			await this._swap0x(
+				'MATIC',
+				inputToken,
+				BigNumber.from(0),
+				BigNumber.from(maxAmountInputToken),
+			)
+
+			console.log('swap executed!')
+		}
+
+		// check allowance
+		const ownerInputTokenAllowance = await usdcERC20.allowance(ownerAddress, basketBuilderAddress)
+		if (ownerInputTokenAllowance < maxAmountInputToken * 100) {
+			// multiplier just for quicker testing...
+			await usdcERC20.approve(basketBuilderAddress, maxAmountInputToken, {
+				gasLimit: 10000000,
+				gasPrice: 1600000000000,
+			})
+			console.log('allowance executed!')
+		}
 	}
 
 	public async swapAndBuild(
@@ -140,10 +187,13 @@ export class BasketDemoSdk {
 			},
 		)
 
-		const receipt = await tx.wait()
+		const receipt = (await tx.wait()) as ContractReceipt
 		console.log('swapAndBuild tx result: ', receipt)
 		console.log('swapAndBuild tx gas used: ', receipt.gasUsed.toString())
-		return receipt
+		console.log('logs', receipt.logs)
+		const basketCreatedEvent: any = (receipt as any)?.events[(receipt as any).events?.length - 1]
+		const tokenId = basketCreatedEvent?.args?.tokenId?.toNumber()
+		return { metadataUri: nftMetadataUri, token: tokenId }
 	}
 
 	public async getBasketAssetAmounts(basketManagerAddress: string, tokenId: number) {

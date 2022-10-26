@@ -4,6 +4,12 @@ pragma solidity >=0.8.17;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IBasketBuilder {
+    event BasketCreated(
+        bytes32 basketBlueprintName,
+        address owner,
+        uint256 tokenId
+    );
+
     function swapAndBuild(
         IERC20 inputToken,
         uint256 maxAmountInputToken,

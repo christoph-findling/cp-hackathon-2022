@@ -90,6 +90,8 @@ contract BasketBuilder is MultiSwap, Ownable, IBasketBuilder, ERC721Holder {
         console.log("swapAndBuild 6");
         // store particle token Id -> basketBlueprintName, user riskRate in BasketManager
         basketManager.createBasketMeta(tokenId, basketBlueprintName, riskRate);
+
+        emit BasketCreated(basketBlueprintName, receiver, tokenId);
     }
 
     /// expects transferFrom from msg.sender for each asset is executable (this is swaps logic agnostic)
