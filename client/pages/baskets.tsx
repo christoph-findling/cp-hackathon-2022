@@ -80,7 +80,7 @@ const Baskets: NextPage = () => {
 
 	return (
 		<Layout>
-			<h1 className='text-2xl text-center mb-4'>Select a basket</h1>
+			<h1 className='text-2xl text-center mb-6'>Select a basket</h1>
 			{baskets.map((basket, index) => (
 				<div
 					className={`flex justify-around items-center border rounded my-2 p-2  ${

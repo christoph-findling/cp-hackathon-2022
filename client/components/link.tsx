@@ -22,7 +22,11 @@ const CustomLink = ({ type, disabled, href, title, ...props }: any) => {
 		)
 	}
 
-	return <Link href={href}>{title}</Link>
+	return (
+		<Link href={href} {...props}>
+			<span className={props?.className}>{title}</span>
+		</Link>
+	)
 }
 
 export default CustomLink

@@ -5,8 +5,22 @@ import CustomLink from '../components/link'
 import Image from 'next/image'
 import workerGif from '../public/icons/icons8-work.gif'
 import robotGif from '../public/icons/icons8-robot.gif'
+import { useDispatch } from 'react-redux'
+import { useState } from 'react'
+import { setAdvisorState } from '../store/advisorSlice'
+import { initialQuestionsState } from '../store/questions'
+import { setResultState } from '../store/resultSlice'
 
 const Home: NextPage = () => {
+	const dispatch = useDispatch()
+	const [initState, setInitState] = useState(false)
+
+	if (!initState) {
+		dispatch(setResultState({ assets: {}, riskTolerance: 0, svg: '', metadataUri: '' }))
+		dispatch(setAdvisorState(initialQuestionsState))
+		setInitState(true)
+	}
+
 	return (
 		<Layout>
 			<div className='flex flex-col justify-center items-center'>
@@ -23,7 +37,7 @@ const Home: NextPage = () => {
 				<div className='w-56 flex items-center justify-center flex-col ml-5 p-7 border rounded drop-shadow-lg bg-white'>
 					<Image width='100' height='100' src={robotGif}></Image>
 					<div className='mt-9'>
-						<CustomLink title='Robo-advisor' type='button' href='/advisor' />
+						<CustomLink title='Robo-advisor' type='button' href='/amount' />
 					</div>
 				</div>
 			</div>

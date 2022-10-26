@@ -10,7 +10,11 @@ export interface ResultState {
 const initialState: ResultState =  {
     resultState: {
       assets: {},
-      riskTolerance: 0
+      riskTolerance: 0,
+      amount: 0,
+      svg: '',
+      metadataUri: '',
+      token: ''
     }
 }
 
@@ -20,7 +24,7 @@ export const resultSlice = createSlice({
     reducers: {
         setResultState(state, action) {
             console.log('set result state');
-            state.resultState = {...action.payload};
+            state.resultState = {...state.resultState, ...action.payload};
             return state;
         },
     },
